@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Clock, X, Zap } from "lucide-react";
+import { AlertTriangle, Clock, FlaskConical, Stethoscope, X, Zap } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import {
   HOJE_ISO,
+  categoriaDe,
   fromISODate,
   getAgendaPorData,
   statusInfo,
