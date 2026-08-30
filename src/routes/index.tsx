@@ -69,9 +69,13 @@ function AgendaPage() {
   const faltas = agenda.filter((a) => a.status === "falta").length;
   const total = agenda.length;
 
+  const totalExames = agenda.filter((a) => categoriaDe(a.tipo) === "exame").length;
+  const totalConsultas = agenda.filter((a) => categoriaDe(a.tipo) === "consulta").length;
+
   const visiveis = useMemo(
     () =>
       agenda.filter((a) => {
+        if (categoria && categoriaDe(a.tipo) !== categoria) return false;
         if (filtro !== "todos" && a.status !== filtro) return false;
         if (busca) {
           const q = busca.toLowerCase();
@@ -83,7 +87,7 @@ function AgendaPage() {
         }
         return true;
       }),
-    [agenda, filtro, busca],
+    [agenda, filtro, busca, categoria],
   );
 
   function handleAction(appointment: Appointment, action: Action) {
