@@ -237,7 +237,7 @@ function AgendaPage() {
         >
           <div className="relative flex-1">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-sm italic text-inksoft/40">
-              Buscar
+              {"\n"}
             </span>
             <input
               type="search"
