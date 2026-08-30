@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
@@ -12,22 +12,38 @@ function applyTheme(theme: Theme) {
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
   const [pronto, setPronto] = useState(false);
+  const temaRef = useRef<Theme>("light");
 
+  // Lê a preferência salva (ou do sistema) depois da hidratação.
   useEffect(() => {
     const salvo = localStorage.getItem("agenda-theme") as Theme | null;
     const inicial: Theme =
-      salvo ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      salvo === "dark" || salvo === "light"
+        ? salvo
+        : window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+    temaRef.current = inicial;
     setTheme(inicial);
     setPronto(true);
-    applyTheme(inicial);
-    // reaplica após a hidratação do React, que pode limpar atributos do <html>
-    const raf = requestAnimationFrame(() => applyTheme(inicial));
-    return () => cancelAnimationFrame(raf);
+
+    // A hidratação do React pode limpar atributos do <html>; reaplica o tema
+    // atual (não o inicial) por alguns frames após a montagem.
+    const timers = [0, 50, 200].map((ms) =>
+      window.setTimeout(() => applyTheme(temaRef.current), ms),
+    );
+    return () => timers.forEach(window.clearTimeout);
   }, []);
+
+  // Fonte única de verdade: sempre que o tema muda, aplica no documento.
+  useEffect(() => {
+    temaRef.current = theme;
+    applyTheme(theme);
+  }, [theme]);
 
   function alternar() {
     const proximo: Theme = theme === "dark" ? "light" : "dark";
+    temaRef.current = proximo;
     setTheme(proximo);
     applyTheme(proximo);
     localStorage.setItem("agenda-theme", proximo);
