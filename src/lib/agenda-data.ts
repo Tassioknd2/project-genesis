@@ -81,3 +81,67 @@ export const statusInfo: Record<
   falta: { rotulo: "Falta", descricao: "Paciente não compareceu" },
   remarcado: { rotulo: "Remarcado", descricao: "Movido para outro horário" },
 };
+
+// --- Agenda por data (dados fictícios determinísticos) ---
+
+export const HOJE_ISO = "2026-08-29";
+
+export function toISODate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function fromISODate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y!, (m ?? 1) - 1, d ?? 1);
+}
+
+function hash(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+const statusFuturos: AppointmentStatus[] = ["agendado", "aguardando", "confirmado", "recusado", "falha_envio"];
+const statusPassados: AppointmentStatus[] = ["concluido", "concluido", "falta", "remarcado", "concluido"];
+
+function pendenciaDe(status: AppointmentStatus): Appointment["pendencia"] {
+  if (status === "recusado") return "recusado";
+  if (status === "aguardando") return "sem_resposta";
+  if (status === "falha_envio") return "falha_envio";
+  return undefined;
+}
+
+/** Retorna a agenda fictícia de uma data (domingos ficam vazios). */
+export function getAgendaPorData(iso: string): Appointment[] {
+  if (iso === HOJE_ISO) return agendaDoDia.map((a) => ({ ...a }));
+
+  const data = fromISODate(iso);
+  const diaSemana = data.getDay();
+  if (diaSemana === 0) return [];
+
+  const semente = hash(iso);
+  const passado = iso < HOJE_ISO;
+  const quantidade = diaSemana === 6 ? 3 + (semente % 3) : 5 + (semente % 6);
+
+  return Array.from({ length: quantidade }, (_, i) => {
+    const base = agendaDoDia[(semente + i * 3) % agendaDoDia.length]!;
+    const status = passado
+      ? statusPassados[(semente + i) % statusPassados.length]!
+      : statusFuturos[(semente + i * 2) % statusFuturos.length]!;
+    const minutos = 8 * 60 + i * 45 + ((semente + i) % 3) * 5;
+    const hora = `${String(Math.floor(minutos / 60)).padStart(2, "0")}:${String(minutos % 60).padStart(2, "0")}`;
+    return {
+      ...base,
+      id: `${iso}-${i}`,
+      hora,
+      status,
+      pendencia: pendenciaDe(status),
+    };
+  });
+}
