@@ -91,7 +91,7 @@ export const statusInfo: Record<
   agendado: { rotulo: "Agendado", descricao: "Criado; confirmação ainda não enviada" },
   aguardando: { rotulo: "Aguardando", descricao: "Confirmação enviada, sem resposta" },
   confirmado: { rotulo: "Confirmado", descricao: "Paciente respondeu SIM" },
-  recusado: { rotulo: "Recusado", descricao: "Paciente respondeu NÃO" },
+  recusado: { rotulo: "CANCELADO", descricao: "Paciente respondeu NÃO" },
   falha_envio: { rotulo: "Falha de envio", descricao: "Mensagem não foi entregue" },
   concluido: { rotulo: "Concluído", descricao: "Atendimento realizado" },
   falta: { rotulo: "Falta", descricao: "Paciente não compareceu" },
