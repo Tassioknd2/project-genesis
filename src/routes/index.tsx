@@ -271,36 +271,25 @@ function AgendaPage() {
           className="card-rise mb-6"
           style={{ animationDelay: "320ms" }}
         >
-          <div
+<div
             role="group"
             aria-label="Categoria"
-            className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-line2 bg-card shadow-sm"
+            className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2"
           >
-            {/* Pílula deslizante do item ativo */}
-            <span
-              aria-hidden
-              className="absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-ink shadow-md transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
-              style={{
-                transform:
-                  categoria === null
-                    ? "translateX(0) scaleX(0)"
-                    : categoria === "exame"
-                      ? "translateX(0)"
-                      : "translateX(100%)",
-                opacity: categoria === null ? 0 : 1,
-                transitionProperty: "transform, opacity",
-              }}
-            />
             <button
               type="button"
               aria-pressed={categoria === "exame"}
               onClick={() => setCategoria((c) => (c === "exame" ? null : "exame"))}
-              className={`relative z-10 flex items-center justify-center gap-3 px-4 py-4 transition-all duration-200 active:scale-[0.98] ${
-                categoria === "exame" ? "text-cream" : "text-ink hover:bg-line/20"
+              className={`flex items-center justify-center gap-3 rounded-2xl border px-4 py-4 shadow-sm transition-all duration-200 active:scale-[0.97] ${
+                categoria === "exame"
+                  ? "border-ink bg-ink text-cream shadow-md"
+                  : "border-line2 bg-card text-ink hover:border-amberdeep/40 hover:bg-amber/5"
               }`}
             >
               <FlaskConical
-                className={`size-5 shrink-0 transition-colors ${categoria === "exame" ? "text-amber" : "text-amberdeep"}`}
+                className={`size-5 shrink-0 transition-colors ${
+                  categoria === "exame" ? "text-amber" : "text-amberdeep"
+                }`}
                 aria-hidden
               />
               <span className="text-sm font-extrabold uppercase tracking-widest">Exames</span>
@@ -318,12 +307,16 @@ function AgendaPage() {
               type="button"
               aria-pressed={categoria === "consulta"}
               onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
-              className={`relative z-10 flex items-center justify-center gap-3 px-4 py-4 transition-all duration-200 active:scale-[0.98] ${
-                categoria === "consulta" ? "text-cream" : "text-ink hover:bg-line/20"
+              className={`flex items-center justify-center gap-3 rounded-2xl border px-4 py-4 shadow-sm transition-all duration-200 active:scale-[0.97] ${
+                categoria === "consulta"
+                  ? "border-ink bg-ink text-cream shadow-md"
+                  : "border-line2 bg-card text-ink hover:border-amberdeep/40 hover:bg-amber/5"
               }`}
             >
               <Stethoscope
-                className={`size-5 shrink-0 transition-colors ${categoria === "consulta" ? "text-amber" : "text-inksoft"}`}
+                className={`size-5 shrink-0 transition-colors ${
+                  categoria === "consulta" ? "text-amber" : "text-inksoft"
+                }`}
                 aria-hidden
               />
               <span className="text-sm font-extrabold uppercase tracking-widest">Consultas</span>
