@@ -47,9 +47,17 @@ const filtrosPrincipais: { id: Filtro; rotulo: string }[] = [
 ];
 
 function AgendaPage() {
-  const [agenda, setAgenda] = useState<Appointment[]>(agendaDoDia);
+  const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
+  const [agenda, setAgenda] = useState<Appointment[]>(() => getAgendaPorData(HOJE_ISO));
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
+
+  const isoSelecionado = toISODate(dataSelecionada);
+
+  useEffect(() => {
+    setAgenda(getAgendaPorData(isoSelecionado));
+    setFiltro("todos");
+  }, [isoSelecionado]);
 
   const confirmados = agenda.filter((a) => a.status === "confirmado" || a.status === "concluido").length;
   const recusados = agenda.filter((a) => a.pendencia === "recusado").length;
