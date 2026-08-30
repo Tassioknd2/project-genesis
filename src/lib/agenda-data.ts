@@ -37,7 +37,7 @@ export interface Appointment {
   tipo: TipoAtendimento;
   medico: string;
   status: AppointmentStatus;
-  pendencia?: "recusado" | "sem_resposta" | "falha_envio" | "tardio";
+  pendencia?: "recusado" | "sem_resposta" | "falha_envio" | "tardio" | undefined;
 }
 
 export const MEDICO = "Dr. Carlos Mendes";
@@ -56,16 +56,16 @@ export const pacientes: Patient[] = [
 ];
 
 export const agendaDoDia: Appointment[] = [
-  { id: "a1", hora: "08:00", duracaoMin: 30, paciente: pacientes[0], tipo: "Eletrocardiograma", medico: MEDICO, status: "concluido" },
-  { id: "a2", hora: "08:30", duracaoMin: 45, paciente: pacientes[7], tipo: "Ecocardiograma", medico: MEDICO, status: "confirmado" },
-  { id: "a3", hora: "09:15", duracaoMin: 30, paciente: pacientes[8], tipo: "Consulta", medico: MEDICO, status: "confirmado" },
-  { id: "a4", hora: "09:45", duracaoMin: 30, paciente: pacientes[1], tipo: "Teste ergométrico", medico: MEDICO, status: "aguardando", pendencia: "sem_resposta" },
-  { id: "a5", hora: "10:30", duracaoMin: 50, paciente: pacientes[2], tipo: "Teste ergométrico", medico: MEDICO, status: "agendado" },
-  { id: "a6", hora: "11:00", duracaoMin: 30, paciente: pacientes[3], tipo: "Retorno", medico: MEDICO, status: "recusado", pendencia: "recusado" },
-  { id: "a7", hora: "13:30", duracaoMin: 40, paciente: pacientes[4], tipo: "Holter 24h", medico: MEDICO, status: "falha_envio", pendencia: "falha_envio" },
-  { id: "a8", hora: "14:30", duracaoMin: 30, paciente: pacientes[9], tipo: "MAPA", medico: MEDICO, status: "aguardando", pendencia: "sem_resposta" },
-  { id: "a9", hora: "15:00", duracaoMin: 30, paciente: pacientes[5], tipo: "Consulta", medico: MEDICO, status: "confirmado" },
-  { id: "a10", hora: "16:30", duracaoMin: 30, paciente: pacientes[6], tipo: "Consulta", medico: MEDICO, status: "falta" },
+  { id: "a1", hora: "08:00", duracaoMin: 30, paciente: pacientes[0]!, tipo: "Eletrocardiograma", medico: MEDICO, status: "concluido" },
+  { id: "a2", hora: "08:30", duracaoMin: 45, paciente: pacientes[7]!, tipo: "Ecocardiograma", medico: MEDICO, status: "confirmado" },
+  { id: "a3", hora: "09:15", duracaoMin: 30, paciente: pacientes[8]!, tipo: "Consulta", medico: MEDICO, status: "confirmado" },
+  { id: "a4", hora: "09:45", duracaoMin: 30, paciente: pacientes[1]!, tipo: "Teste ergométrico", medico: MEDICO, status: "aguardando", pendencia: "sem_resposta" },
+  { id: "a5", hora: "10:30", duracaoMin: 50, paciente: pacientes[2]!, tipo: "Teste ergométrico", medico: MEDICO, status: "agendado" },
+  { id: "a6", hora: "11:00", duracaoMin: 30, paciente: pacientes[3]!, tipo: "Retorno", medico: MEDICO, status: "recusado", pendencia: "recusado" },
+  { id: "a7", hora: "13:30", duracaoMin: 40, paciente: pacientes[4]!, tipo: "Holter 24h", medico: MEDICO, status: "falha_envio", pendencia: "falha_envio" },
+  { id: "a8", hora: "14:30", duracaoMin: 30, paciente: pacientes[9]!, tipo: "MAPA", medico: MEDICO, status: "aguardando", pendencia: "sem_resposta" },
+  { id: "a9", hora: "15:00", duracaoMin: 30, paciente: pacientes[5]!, tipo: "Consulta", medico: MEDICO, status: "confirmado" },
+  { id: "a10", hora: "16:30", duracaoMin: 30, paciente: pacientes[6]!, tipo: "Consulta", medico: MEDICO, status: "falta" },
 ];
 
 export const statusInfo: Record<
