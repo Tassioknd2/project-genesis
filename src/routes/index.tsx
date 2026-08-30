@@ -111,7 +111,7 @@ function AgendaPage() {
 
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
-      <AppHeader />
+      <AppHeader selectedDate={dataSelecionada} onSelectDate={setDataSelecionada} />
 
       <main className="mx-auto max-w-[1200px] px-5 py-8 lg:px-8">
         {/* Indicadores do dia */}
@@ -146,7 +146,7 @@ function AgendaPage() {
             <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-line2/30">
               <div
                 className="h-full rounded-full bg-ok"
-                style={{ width: `${Math.round((confirmados / total) * 100)}%` }}
+                style={{ width: `${total ? Math.round((confirmados / total) * 100) : 0}%` }}
               />
             </div>
           </div>
@@ -271,7 +271,7 @@ function AgendaPage() {
           {visiveis.length === 0 && (
             <div className="rounded-2xl border border-dashed border-line2 bg-card p-12 text-center">
               <p className="text-sm font-semibold text-inksoft">
-                Nenhum agendamento encontrado para esse filtro.
+                Nenhum agendamento para esse dia ou filtro.
               </p>
               <button
                 type="button"
