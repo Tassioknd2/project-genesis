@@ -82,7 +82,7 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps = {}) {
           <button
             type="button"
             aria-label="Dia anterior"
-            onClick={() => selecionar(addDays(selectedDate, -1))}
+            onClick={() => selecionar(addDays(data, -1))}
             className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
           >
             <ChevronLeft className="size-4" />
@@ -142,7 +142,7 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps = {}) {
           <button
             type="button"
             aria-label="Próximo dia"
-            onClick={() => selecionar(addDays(selectedDate, 1))}
+            onClick={() => selecionar(addDays(data, 1))}
             className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
           >
             <ChevronRight className="size-4" />
