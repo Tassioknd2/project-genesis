@@ -1,17 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Clock, X, Zap } from "lucide-react";
+import { AlertTriangle, Clock, FlaskConical, Stethoscope, X, Zap } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import {
   HOJE_ISO,
+  categoriaDe,
   fromISODate,
   getAgendaPorData,
   statusInfo,
   toISODate,
   type Appointment,
   type AppointmentStatus,
+  type CategoriaAtendimento,
 } from "@/lib/agenda-data";
 
 export const Route = createFileRoute("/")({
@@ -51,6 +53,7 @@ function AgendaPage() {
   const [agenda, setAgenda] = useState<Appointment[]>(() => getAgendaPorData(HOJE_ISO));
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
+  const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 

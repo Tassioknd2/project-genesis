@@ -42,6 +42,22 @@ export interface Appointment {
 
 export const MEDICO = "Dr. Carlos Mendes";
 
+// --- Categoria do atendimento (exame vs consulta) ---
+
+export type CategoriaAtendimento = "exame" | "consulta";
+
+const tiposExame: TipoAtendimento[] = [
+  "Eletrocardiograma",
+  "Ecocardiograma",
+  "Teste ergométrico",
+  "Holter 24h",
+  "MAPA",
+];
+
+export function categoriaDe(tipo: TipoAtendimento): CategoriaAtendimento {
+  return tiposExame.includes(tipo) ? "exame" : "consulta";
+}
+
 export const pacientes: Patient[] = [
   { id: "p1", nome: "Marta Nogueira", idade: 62, telefone: "(11) 98812-4450", convenio: "Unimed", ultimaVisita: "03/01/2026", observacoes: "Hipertensa; traz último exame de sangue." },
   { id: "p2", nome: "Roberto Lima", idade: 58, telefone: "(11) 97123-8801", convenio: "Particular", ultimaVisita: "18/12/2025" },
