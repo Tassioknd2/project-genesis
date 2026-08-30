@@ -50,12 +50,14 @@ export function AppHeader() {
         </div>
 
         <div className="header-item flex items-center gap-3">
+          <ThemeToggle />
           <Link
             to="/pacientes"
             className="hidden text-xs font-bold uppercase tracking-wider text-inksoft transition-colors hover:text-amber md:block"
           >
             Pacientes
           </Link>
+
           <button
             type="button"
             className="h-9 rounded-xl bg-ink px-5 text-xs font-bold uppercase tracking-wider text-cream shadow-sm transition-all hover:bg-ink/90 active:translate-y-px"
