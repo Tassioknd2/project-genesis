@@ -69,9 +69,13 @@ function AgendaPage() {
   const faltas = agenda.filter((a) => a.status === "falta").length;
   const total = agenda.length;
 
+  const totalExames = agenda.filter((a) => categoriaDe(a.tipo) === "exame").length;
+  const totalConsultas = agenda.filter((a) => categoriaDe(a.tipo) === "consulta").length;
+
   const visiveis = useMemo(
     () =>
       agenda.filter((a) => {
+        if (categoria && categoriaDe(a.tipo) !== categoria) return false;
         if (filtro !== "todos" && a.status !== filtro) return false;
         if (busca) {
           const q = busca.toLowerCase();
@@ -83,7 +87,7 @@ function AgendaPage() {
         }
         return true;
       }),
-    [agenda, filtro, busca],
+    [agenda, filtro, busca, categoria],
   );
 
   function handleAction(appointment: Appointment, action: Action) {
@@ -261,6 +265,81 @@ function AgendaPage() {
           </div>
         </section>
 
+        {/* Filtro por categoria — Exames × Consultas */}
+        <section
+          aria-label="Filtrar por tipo de atendimento"
+          className="card-rise mb-6"
+          style={{ animationDelay: "320ms" }}
+        >
+          <div
+            role="group"
+            aria-label="Categoria"
+            className="relative grid grid-cols-2 overflow-hidden rounded-2xl border border-line2 bg-card shadow-sm"
+          >
+            {/* Pílula deslizante do item ativo */}
+            <span
+              aria-hidden
+              className="absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-ink shadow-md transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+              style={{
+                transform:
+                  categoria === null
+                    ? "translateX(0) scaleX(0)"
+                    : categoria === "exame"
+                      ? "translateX(0)"
+                      : "translateX(100%)",
+                opacity: categoria === null ? 0 : 1,
+                transitionProperty: "transform, opacity",
+              }}
+            />
+            <button
+              type="button"
+              aria-pressed={categoria === "exame"}
+              onClick={() => setCategoria((c) => (c === "exame" ? null : "exame"))}
+              className={`relative z-10 flex items-center justify-center gap-3 px-4 py-4 transition-all duration-200 active:scale-[0.98] ${
+                categoria === "exame" ? "text-cream" : "text-ink hover:bg-line/20"
+              }`}
+            >
+              <FlaskConical
+                className={`size-5 shrink-0 transition-colors ${categoria === "exame" ? "text-amber" : "text-amberdeep"}`}
+                aria-hidden
+              />
+              <span className="text-sm font-extrabold uppercase tracking-widest">Exames</span>
+              <span
+                className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors ${
+                  categoria === "exame"
+                    ? "bg-amber/20 text-amber"
+                    : "bg-amber/10 text-amberdeep"
+                }`}
+              >
+                {totalExames} agendado{totalExames === 1 ? "" : "s"}
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={categoria === "consulta"}
+              onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
+              className={`relative z-10 flex items-center justify-center gap-3 px-4 py-4 transition-all duration-200 active:scale-[0.98] ${
+                categoria === "consulta" ? "text-cream" : "text-ink hover:bg-line/20"
+              }`}
+            >
+              <Stethoscope
+                className={`size-5 shrink-0 transition-colors ${categoria === "consulta" ? "text-amber" : "text-inksoft"}`}
+                aria-hidden
+              />
+              <span className="text-sm font-extrabold uppercase tracking-widest">Consultas</span>
+              <span
+                className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors ${
+                  categoria === "consulta"
+                    ? "bg-amber/20 text-amber"
+                    : "bg-mutbg text-inksoft"
+                }`}
+              >
+                {totalConsultas} agendado{totalConsultas === 1 ? "" : "s"}
+              </span>
+            </button>
+          </div>
+        </section>
+
         {/* Lista de agendamentos */}
         <section aria-label="Agenda do dia" className="space-y-3">
           {visiveis.map((appointment, i) => (
@@ -281,6 +360,7 @@ function AgendaPage() {
                 onClick={() => {
                   setFiltro("todos");
                   setBusca("");
+                  setCategoria(null);
                 }}
                 className="mt-3 text-xs font-bold uppercase tracking-wider text-amber hover:text-amberdeep"
               >
