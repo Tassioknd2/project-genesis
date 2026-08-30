@@ -13,6 +13,7 @@ import {
   toISODate,
   type Appointment,
   type AppointmentStatus,
+  type CategoriaAtendimento,
 } from "@/lib/agenda-data";
 
 export const Route = createFileRoute("/")({
@@ -52,6 +53,7 @@ function AgendaPage() {
   const [agenda, setAgenda] = useState<Appointment[]>(() => getAgendaPorData(HOJE_ISO));
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
+  const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
