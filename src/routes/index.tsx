@@ -130,111 +130,103 @@ function AgendaPage() {
       <AppHeader selectedDate={dataSelecionada} onSelectDate={setDataSelecionada} />
 
       <main className="mx-auto max-w-[1200px] px-5 py-8 lg:px-8">
-        {/* Indicadores do dia */}
+        {/* Indicadores do dia — linha única */}
         <section
           aria-label="Indicadores do dia"
-          className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4"
+          className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
         >
-          <div className="card-rise rounded-2xl border border-line2/60 bg-card p-4 shadow-sm" style={{ animationDelay: "50ms" }}>
-            <div className="mb-3 flex items-start justify-between">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft/70">
-                Agendamentos
-              </span>
-              <span className="mt-1 size-1.5 rounded-full bg-amber" />
-            </div>
-            <div className="text-3xl font-bold tracking-tighter">{total}</div>
-            <div className="mt-2 text-[10px] font-bold uppercase tracking-tight text-ok">
-              horários de 30 min
-            </div>
-          </div>
-
-          <div className="card-rise rounded-2xl border border-line2/60 bg-card p-4 shadow-sm" style={{ animationDelay: "100ms" }}>
-            <div className="mb-3 flex items-start justify-between">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft/70">
-                Confirmados
-              </span>
-              <span className="mt-1 size-1.5 rounded-full bg-ok" />
-            </div>
-            <div className="text-3xl font-bold tracking-tighter">
-              {confirmados}
-              <span className="ml-1 text-sm font-medium text-inksoft">/ {total}</span>
-            </div>
-            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-line2/30">
-              <div
-                className="h-full rounded-full bg-ok"
-                style={{ width: `${total ? Math.round((confirmados / total) * 100) : 0}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="card-rise rounded-2xl border border-line2/60 bg-card p-4 shadow-sm" style={{ animationDelay: "150ms" }}>
-            <div className="mb-3 flex items-start justify-between">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft/70">
-                Faltas
-              </span>
-              <span className="mt-1 size-1.5 rounded-full bg-bad" />
-            </div>
-            <div className="text-3xl font-bold tracking-tighter text-bad">{faltas}</div>
-            <div className="mt-2 text-[10px] font-medium uppercase text-inksoft">
-              {total ? Math.round((faltas / total) * 100) : 0}% do dia
-            </div>
-          </div>
-
-          <div className="card-rise rounded-2xl bg-ink p-4 text-paper shadow-md" style={{ animationDelay: "200ms" }}>
-            <div className="mb-3 flex items-start justify-between">
-              <span className="font-mono text-[10px] uppercase tracking-widest opacity-60">
-                Entregas WhatsApp
-              </span>
-              <span className="mt-1 size-1.5 rounded-full bg-amber" />
-            </div>
-            <div className="text-3xl font-bold tracking-tighter">
-              90<span className="ml-0.5 text-sm opacity-60">%</span>
-            </div>
-            <div className="mt-2 text-[10px] font-bold uppercase tracking-widest opacity-80 underline underline-offset-4">
-              {falhas} falha(s) visível(is)
-            </div>
-          </div>
-        </section>
-
-        {/* Faixa de pendências */}
-        <section
-          aria-label="Pendências"
-          className="card-rise mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-amber/40 bg-cream px-3 py-2.5"
-          style={{ animationDelay: "240ms" }}
-        >
-          <div className="flex shrink-0 items-center gap-2 pr-3">
-            <AlertTriangle className="size-4 text-amber" aria-hidden />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-amberdeep">
-              Pendências
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setFiltro("recusado")}
-            className="flex items-center gap-2 rounded-lg border border-bad/30 bg-badbg/60 px-3 py-1.5 text-xs font-semibold text-bad transition-colors hover:bg-badbg"
+          {/* Agendamentos */}
+          <div
+            className="card-rise flex items-center gap-3 rounded-2xl border border-line2/60 bg-card px-4 py-3 shadow-sm"
+            style={{ animationDelay: "50ms" }}
           >
-            <X className="size-3.5" aria-hidden /> {recusados} recusados
-          </button>
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber/10 text-amberdeep">
+              <CalendarDays className="size-4.5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-mono text-[9px] uppercase tracking-widest text-inksoft/70">
+                Agendamentos
+              </div>
+              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums">
+                {total}
+              </div>
+            </div>
+          </div>
+
+          {/* Confirmados */}
+          <div
+            className="card-rise flex items-center gap-3 rounded-2xl border border-line2/60 bg-card px-4 py-3 shadow-sm"
+            style={{ animationDelay: "100ms" }}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ok/10 text-ok">
+              <CheckCircle2 className="size-4.5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-mono text-[9px] uppercase tracking-widest text-inksoft/70">
+                Confirmados
+              </div>
+              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums">
+                {confirmados}
+                <span className="ml-1 text-xs font-medium text-inksoft">/ {total}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Faltas */}
+          <div
+            className="card-rise flex items-center gap-3 rounded-2xl border border-line2/60 bg-card px-4 py-3 shadow-sm"
+            style={{ animationDelay: "150ms" }}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-bad/10 text-bad">
+              <UserX className="size-4.5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-mono text-[9px] uppercase tracking-widest text-inksoft/70">
+                Faltas
+              </div>
+              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums text-bad">
+                {faltas}
+              </div>
+            </div>
+          </div>
+
+          {/* Entregas WhatsApp */}
+          <div
+            className="card-rise flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-paper shadow-md"
+            style={{ animationDelay: "200ms" }}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-paper/10 text-amber">
+              <MessageCircle className="size-4.5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-mono text-[9px] uppercase tracking-widest opacity-60">
+                WhatsApp
+              </div>
+              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums">
+                90<span className="ml-0.5 text-xs opacity-60">%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pendências */}
           <button
             type="button"
             onClick={() => setFiltro("aguardando")}
-            className="flex items-center gap-2 rounded-lg border border-warn/30 bg-warnbg/70 px-3 py-1.5 text-xs font-semibold text-warn transition-colors hover:bg-warnbg"
+            title={`${recusados} recusado(s) · ${semResposta} sem resposta · ${falhas} falha(s) de envio — clique para ver os que aguardam`}
+            className="card-rise flex items-center gap-3 rounded-2xl border border-amber/40 bg-cream px-4 py-3 text-left shadow-sm transition-all duration-200 hover:border-amber hover:shadow-md active:scale-[0.97]"
+            style={{ animationDelay: "250ms" }}
           >
-            <Clock className="size-3.5" aria-hidden /> {semResposta} sem resposta
-          </button>
-          <button
-            type="button"
-            onClick={() => setFiltro("falha_envio")}
-            className="flex items-center gap-2 rounded-lg border border-bad/30 bg-badbg/60 px-3 py-1.5 text-xs font-semibold text-bad transition-colors hover:bg-badbg"
-          >
-            <Zap className="size-3.5" aria-hidden /> {falhas} falha de envio
-          </button>
-          <button
-            type="button"
-            onClick={() => toast.info("Reenvio em lote disponível na versão conectada ao WhatsApp.")}
-            className="ml-auto h-7 shrink-0 rounded-md px-2.5 text-[11px] font-bold uppercase tracking-wide text-amberdeep transition-colors hover:bg-amber/10"
-          >
-            Reenviar tudo
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber/15 text-amberdeep">
+              <AlertTriangle className="size-4.5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-amberdeep">
+                Pendências
+              </div>
+              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums text-amberdeep">
+                {recusados + semResposta + falhas}
+              </div>
+            </div>
           </button>
         </section>
 
