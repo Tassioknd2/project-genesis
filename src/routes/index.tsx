@@ -360,6 +360,7 @@ function AgendaPage() {
                 onClick={() => {
                   setFiltro("todos");
                   setBusca("");
+                  setCategoria(null);
                 }}
                 className="mt-3 text-xs font-bold uppercase tracking-wider text-amber hover:text-amberdeep"
               >
