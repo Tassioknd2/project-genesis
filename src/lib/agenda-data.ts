@@ -94,7 +94,7 @@ export const statusInfo: Record<
   recusado: { rotulo: "CANCELADO", descricao: "Paciente respondeu NÃO" },
   falha_envio: { rotulo: "Falha de envio", descricao: "Mensagem não foi entregue" },
   concluido: { rotulo: "Concluído", descricao: "Atendimento realizado" },
-  falta: { rotulo: "Falta", descricao: "Paciente não compareceu" },
+  falta: { rotulo: "FALTANTE", descricao: "Paciente não compareceu" },
   remarcado: { rotulo: "Remarcado", descricao: "Movido para outro horário" },
 };
 
