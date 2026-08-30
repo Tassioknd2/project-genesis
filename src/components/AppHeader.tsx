@@ -1,9 +1,63 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { HOJE_ISO, fromISODate } from "@/lib/agenda-data";
 
+interface AppHeaderProps {
+  selectedDate?: Date;
+  onSelectDate?: (date: Date) => void;
+}
 
-export function AppHeader() {
+const MESES = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+const DIAS = [
+  "Domingo",
+  "Segunda-feira",
+  "Terça-feira",
+  "Quarta-feira",
+  "Quinta-feira",
+  "Sexta-feira",
+  "Sábado",
+];
+
+function addDays(date: Date, days: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps = {}) {
+  const [aberto, setAberto] = useState(false);
+  const [mes, setMes] = useState<Date>(new Date());
+  const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
+
+  const data = selectedDate ?? dataLocal;
+  const selecionar = onSelectDate ?? setDataLocal;
+
+  function abrir(open: boolean) {
+    // Sempre reabre no mês atual, como pedido.
+    if (open) setMes(new Date());
+    setAberto(open);
+  }
+
   return (
     <header className="sticky top-0 z-30 border-b border-line2/50 bg-paper/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-8 px-5 lg:px-8">
@@ -28,21 +82,67 @@ export function AppHeader() {
           <button
             type="button"
             aria-label="Dia anterior"
+            onClick={() => selecionar(addDays(data, -1))}
             className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
           >
             <ChevronLeft className="size-4" />
           </button>
-          <div className="min-w-[160px] px-4 text-center">
-            <div className="text-[13px] font-bold tracking-tight">
-              29 de Agosto, 2026
-            </div>
-            <div className="font-mono text-[9px] font-semibold uppercase tracking-widest text-amber">
-              Sábado
-            </div>
-          </div>
+
+          <Popover open={aberto} onOpenChange={abrir}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Abrir calendário do mês"
+                className={cn(
+                  "min-w-[160px] rounded-lg px-4 py-1 text-center transition-colors hover:bg-card/60",
+                  aberto && "bg-card/70",
+                )}
+              >
+                <div className="text-[13px] font-bold tracking-tight">
+                  {data.getDate()} de {MESES[data.getMonth()]},{" "}
+                  {data.getFullYear()}
+                </div>
+                <div className="font-mono text-[9px] font-semibold uppercase tracking-widest text-amber">
+                  {DIAS[data.getDay()]}
+                </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="w-auto p-0">
+              <Calendar
+                mode="single"
+                locale={ptBR}
+                month={mes}
+                onMonthChange={setMes}
+                selected={data}
+                onSelect={(d) => {
+                  if (!d) return;
+                  selecionar(d);
+                  setAberto(false);
+                }}
+                className={cn("p-3 pointer-events-auto")}
+              />
+              <div className="flex items-center justify-between border-t border-line2/50 px-3 py-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
+                  Escolha um dia
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    selecionar(new Date());
+                    setAberto(false);
+                  }}
+                  className="text-[11px] font-bold uppercase tracking-wider text-amber hover:text-amberdeep"
+                >
+                  Hoje
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <button
             type="button"
             aria-label="Próximo dia"
+            onClick={() => selecionar(addDays(data, 1))}
             className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
           >
             <ChevronRight className="size-4" />

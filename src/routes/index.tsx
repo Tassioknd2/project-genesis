@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Clock, X, Zap } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import {
-  agendaDoDia,
+  HOJE_ISO,
+  fromISODate,
+  getAgendaPorData,
   statusInfo,
+  toISODate,
   type Appointment,
   type AppointmentStatus,
 } from "@/lib/agenda-data";
@@ -44,9 +47,17 @@ const filtrosPrincipais: { id: Filtro; rotulo: string }[] = [
 ];
 
 function AgendaPage() {
-  const [agenda, setAgenda] = useState<Appointment[]>(agendaDoDia);
+  const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
+  const [agenda, setAgenda] = useState<Appointment[]>(() => getAgendaPorData(HOJE_ISO));
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
+
+  const isoSelecionado = toISODate(dataSelecionada);
+
+  useEffect(() => {
+    setAgenda(getAgendaPorData(isoSelecionado));
+    setFiltro("todos");
+  }, [isoSelecionado]);
 
   const confirmados = agenda.filter((a) => a.status === "confirmado" || a.status === "concluido").length;
   const recusados = agenda.filter((a) => a.pendencia === "recusado").length;
@@ -100,7 +111,7 @@ function AgendaPage() {
 
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
-      <AppHeader />
+      <AppHeader selectedDate={dataSelecionada} onSelectDate={setDataSelecionada} />
 
       <main className="mx-auto max-w-[1200px] px-5 py-8 lg:px-8">
         {/* Indicadores do dia */}
@@ -135,7 +146,7 @@ function AgendaPage() {
             <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-line2/30">
               <div
                 className="h-full rounded-full bg-ok"
-                style={{ width: `${Math.round((confirmados / total) * 100)}%` }}
+                style={{ width: `${total ? Math.round((confirmados / total) * 100) : 0}%` }}
               />
             </div>
           </div>
@@ -260,7 +271,7 @@ function AgendaPage() {
           {visiveis.length === 0 && (
             <div className="rounded-2xl border border-dashed border-line2 bg-card p-12 text-center">
               <p className="text-sm font-semibold text-inksoft">
-                Nenhum agendamento encontrado para esse filtro.
+                Nenhum agendamento para esse dia ou filtro.
               </p>
               <button
                 type="button"
