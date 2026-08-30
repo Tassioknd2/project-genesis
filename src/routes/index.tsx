@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Clock, X, Zap } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import {
-  agendaDoDia,
+  HOJE_ISO,
+  fromISODate,
+  getAgendaPorData,
   statusInfo,
+  toISODate,
   type Appointment,
   type AppointmentStatus,
 } from "@/lib/agenda-data";
