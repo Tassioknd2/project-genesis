@@ -19,8 +19,11 @@ export function ThemeToggle() {
       salvo ??
       (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setTheme(inicial);
-    applyTheme(inicial);
     setPronto(true);
+    applyTheme(inicial);
+    // reaplica após a hidratação do React, que pode limpar atributos do <html>
+    const raf = requestAnimationFrame(() => applyTheme(inicial));
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   function alternar() {
