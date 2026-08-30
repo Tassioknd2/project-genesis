@@ -6,10 +6,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { HOJE_ISO, fromISODate } from "@/lib/agenda-data";
 
 interface AppHeaderProps {
-  selectedDate: Date;
-  onSelectDate: (date: Date) => void;
+  selectedDate?: Date;
+  onSelectDate?: (date: Date) => void;
 }
 
 const MESES = [
@@ -43,9 +44,13 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps) {
+export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps = {}) {
   const [aberto, setAberto] = useState(false);
   const [mes, setMes] = useState<Date>(new Date());
+  const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
+
+  const data = selectedDate ?? dataLocal;
+  const selecionar = onSelectDate ?? setDataLocal;
 
   function abrir(open: boolean) {
     // Sempre reabre no mês atual, como pedido.
@@ -77,7 +82,7 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps) {
           <button
             type="button"
             aria-label="Dia anterior"
-            onClick={() => onSelectDate(addDays(selectedDate, -1))}
+            onClick={() => selecionar(addDays(selectedDate, -1))}
             className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
           >
             <ChevronLeft className="size-4" />
@@ -94,11 +99,11 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps) {
                 )}
               >
                 <div className="text-[13px] font-bold tracking-tight">
-                  {selectedDate.getDate()} de {MESES[selectedDate.getMonth()]},{" "}
-                  {selectedDate.getFullYear()}
+                  {data.getDate()} de {MESES[data.getMonth()]},{" "}
+                  {data.getFullYear()}
                 </div>
                 <div className="font-mono text-[9px] font-semibold uppercase tracking-widest text-amber">
-                  {DIAS[selectedDate.getDay()]}
+                  {DIAS[data.getDay()]}
                 </div>
               </button>
             </PopoverTrigger>
@@ -108,10 +113,10 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps) {
                 locale={ptBR}
                 month={mes}
                 onMonthChange={setMes}
-                selected={selectedDate}
+                selected={data}
                 onSelect={(d) => {
                   if (!d) return;
-                  onSelectDate(d);
+                  selecionar(d);
                   setAberto(false);
                 }}
                 className={cn("p-3 pointer-events-auto")}
@@ -123,7 +128,7 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    onSelectDate(new Date());
+                    selecionar(new Date());
                     setAberto(false);
                   }}
                   className="text-[11px] font-bold uppercase tracking-wider text-amber hover:text-amberdeep"
@@ -137,7 +142,7 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps) {
           <button
             type="button"
             aria-label="Próximo dia"
-            onClick={() => onSelectDate(addDays(selectedDate, 1))}
+            onClick={() => selecionar(addDays(selectedDate, 1))}
             className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
           >
             <ChevronRight className="size-4" />
