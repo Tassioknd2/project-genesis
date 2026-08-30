@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
 
 export function AppHeader() {
   return (
