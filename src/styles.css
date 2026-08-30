@@ -177,8 +177,31 @@
   }
 }
 
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.22);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.18);
+  }
+  56% {
+    transform: scale(1);
+  }
+}
+
 @utility card-rise {
   animation: rise 480ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@utility heartbeat {
+  animation: heartbeat 1.6s ease-in-out infinite;
 }
 
 @utility header-item {
