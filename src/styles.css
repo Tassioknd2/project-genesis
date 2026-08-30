@@ -101,6 +101,48 @@
   --ring: var(--amber);
 }
 
+/* Modo escuro — mesma linguagem quente, invertida para papel noturno.
+   Tokens espelham os claros: ink = texto, cream = texto sobre superfícies ink. */
+.dark {
+  --paper: oklch(0.196 0.011 68.5);
+  --card: oklch(0.243 0.013 70.2);
+  --ink: oklch(0.945 0.011 85.2);
+  --inksoft: oklch(0.732 0.016 80.1);
+  --line: oklch(0.305 0.013 72.4);
+  --line2: oklch(0.375 0.016 72.8);
+  --amber: oklch(0.762 0.114 62.4);
+  --amberdeep: oklch(0.842 0.096 70.5);
+  --cream: oklch(0.19 0.012 68.9);
+  --ok: oklch(0.79 0.108 145.2);
+  --okbg: oklch(0.31 0.045 146.1);
+  --warn: oklch(0.83 0.107 84.6);
+  --warnbg: oklch(0.328 0.05 82.4);
+  --bad: oklch(0.762 0.116 25.8);
+  --badbg: oklch(0.32 0.061 26.4);
+  --mut: oklch(0.762 0.014 78.2);
+  --mutbg: oklch(0.294 0.011 74.6);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card-foreground: var(--ink);
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--cream);
+  --secondary: var(--mutbg);
+  --secondary-foreground: var(--ink);
+  --muted: var(--mutbg);
+  --muted-foreground: var(--inksoft);
+  --accent: var(--amber);
+  --accent-foreground: var(--cream);
+  --destructive: var(--bad);
+  --destructive-foreground: var(--cream);
+  --border: var(--line2);
+  --input: var(--line2);
+  --ring: var(--amber);
+}
+
+
 @layer base {
   * {
     border-color: var(--color-border);
