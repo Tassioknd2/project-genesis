@@ -62,15 +62,21 @@ const filtrosPrincipais: { id: Filtro; rotulo: string }[] = [
 
 function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
-  const [agenda, setAgenda] = useState<Appointment[]>(() => getAgendaPorData(HOJE_ISO));
+  const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
+  const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
+  // Agenda do dia = base fictícia + criados na sessão + alterações de status.
+  const agenda = useMemo(() => {
+    const base = [...getAgendaPorData(isoSelecionado), ...(extras[isoSelecionado] ?? [])];
+    return base.map((a) => alteracoes[a.id] ?? a);
+  }, [isoSelecionado, extras, alteracoes]);
+
   useEffect(() => {
-    setAgenda(getAgendaPorData(isoSelecionado));
     setFiltro("todos");
   }, [isoSelecionado]);
 
