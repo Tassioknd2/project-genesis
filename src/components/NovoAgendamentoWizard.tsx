@@ -160,15 +160,16 @@ export function NovoAgendamentoWizard({
         ? !!tipo && !!hora
         : true;
 
-  function confirmar() {
+function confirmar() {
     if (!pacienteFinal || !tipo || !hora) return;
+    const textoObs = observacoes.trim();
     onSalvar({
       paciente: pacienteFinal,
       tipo,
       data,
       hora,
       duracaoMin: duracaoDe(tipo),
-      observacoes: observacoes.trim() || undefined,
+      ...(textoObs ? { observacoes: textoObs } : {}),
     });
     onOpenChange(false);
   }
