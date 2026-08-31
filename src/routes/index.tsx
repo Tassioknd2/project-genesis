@@ -128,6 +128,7 @@ function AgendaPage() {
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
       <AppHeader selectedDate={dataSelecionada} onSelectDate={setDataSelecionada} />
+      <ScrollProgressHeart />
 
       <main className="mx-auto max-w-[1200px] px-5 py-8 lg:px-8">
         {/* Indicadores do dia — linha única */}
