@@ -13,11 +13,14 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import { ScrollProgressHeart } from "@/components/ScrollProgressHeart";
+import type { NovoAgendamentoDraft } from "@/components/NovoAgendamentoWizard";
 import {
   HOJE_ISO,
+  MEDICO,
   categoriaDe,
   fromISODate,
   getAgendaPorData,
+  pacientes,
   statusInfo,
   toISODate,
   type Appointment,
@@ -59,15 +62,21 @@ const filtrosPrincipais: { id: Filtro; rotulo: string }[] = [
 
 function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
-  const [agenda, setAgenda] = useState<Appointment[]>(() => getAgendaPorData(HOJE_ISO));
+  const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
+  const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
+  // Agenda do dia = base fictícia + criados na sessão + alterações de status.
+  const agenda = useMemo(() => {
+    const base = [...getAgendaPorData(isoSelecionado), ...(extras[isoSelecionado] ?? [])];
+    return base.map((a) => alteracoes[a.id] ?? a);
+  }, [isoSelecionado, extras, alteracoes]);
+
   useEffect(() => {
-    setAgenda(getAgendaPorData(isoSelecionado));
     setFiltro("todos");
   }, [isoSelecionado]);
 
@@ -99,19 +108,16 @@ function AgendaPage() {
     [agenda, filtro, busca, categoria],
   );
 
-  function handleAction(appointment: Appointment, action: Action) {
+function handleAction(appointment: Appointment, action: Action) {
     if (action.status) {
-      setAgenda((atual) =>
-        atual.map((a) =>
-          a.id === appointment.id
-            ? {
-                ...a,
-                status: action.status!,
-                pendencia: undefined,
-              }
-            : a,
-        ),
-      );
+      setAlteracoes((atual) => ({
+        ...atual,
+        [appointment.id]: {
+          ...appointment,
+          status: action.status!,
+          pendencia: undefined,
+        },
+      }));
       toast.success(
         `${appointment.paciente.nome.split(" ")[0]} — ${action.label.toLowerCase()}`,
         {
@@ -125,9 +131,49 @@ function AgendaPage() {
     }
   }
 
+  function handleNovoAgendamento(draft: NovoAgendamentoDraft) {
+    // Registra paciente novo no cadastro (dados em memória).
+    if (!pacientes.some((p) => p.id === draft.paciente.id)) {
+      pacientes.push(draft.paciente);
+    }
+
+    const novo: Appointment = {
+      id: `novo-${Date.now()}`,
+      hora: draft.hora,
+      duracaoMin: draft.duracaoMin,
+      paciente: draft.paciente,
+      tipo: draft.tipo,
+      medico: MEDICO,
+      status: "agendado",
+    };
+
+    const isoDraft = toISODate(draft.data);
+
+    setExtras((atual) => ({
+      ...atual,
+      [isoDraft]: [...(atual[isoDraft] ?? []), novo],
+    }));
+    setFiltro("todos");
+    setBusca("");
+    setCategoria(null);
+
+    // Se o agendamento é para outra data, navega até ela.
+    if (isoDraft !== isoSelecionado) {
+      setDataSelecionada(draft.data);
+    }
+
+    toast.success(`Agendamento criado — ${draft.paciente.nome.split(" ")[0]}`, {
+      description: `${draft.tipo} · ${draft.hora} · ${statusInfo.agendado.rotulo}`,
+    });
+  }
+
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
-      <AppHeader selectedDate={dataSelecionada} onSelectDate={setDataSelecionada} />
+<AppHeader
+        selectedDate={dataSelecionada}
+        onSelectDate={setDataSelecionada}
+        onNovoAgendamento={handleNovoAgendamento}
+      />
       <ScrollProgressHeart />
 
       <main className="mx-auto max-w-[1200px] px-5 py-8 lg:px-8">

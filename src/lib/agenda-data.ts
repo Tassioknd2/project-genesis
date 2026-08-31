@@ -58,6 +58,20 @@ export function categoriaDe(tipo: TipoAtendimento): CategoriaAtendimento {
   return tiposExame.includes(tipo) ? "exame" : "consulta";
 }
 
+const DURACOES: Record<TipoAtendimento, number> = {
+  Consulta: 30,
+  Retorno: 30,
+  Eletrocardiograma: 30,
+  Ecocardiograma: 45,
+  "Teste ergométrico": 50,
+  "Holter 24h": 40,
+  MAPA: 30,
+};
+
+export function duracaoDe(tipo: TipoAtendimento): number {
+  return DURACOES[tipo] ?? 30;
+}
+
 export const pacientes: Patient[] = [
   { id: "p1", nome: "Marta Nogueira", idade: 62, telefone: "(11) 98812-4450", convenio: "Unimed", ultimaVisita: "03/01/2026", observacoes: "Hipertensa; traz último exame de sangue." },
   { id: "p2", nome: "Roberto Lima", idade: 58, telefone: "(11) 97123-8801", convenio: "Particular", ultimaVisita: "18/12/2025" },

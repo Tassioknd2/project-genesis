@@ -1,16 +1,22 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { HOJE_ISO, fromISODate } from "@/lib/agenda-data";
+import {
+  NovoAgendamentoWizard,
+  type NovoAgendamentoDraft,
+} from "@/components/NovoAgendamentoWizard";
 
 interface AppHeaderProps {
   selectedDate?: Date;
   onSelectDate?: (date: Date) => void;
+  onNovoAgendamento?: (draft: NovoAgendamentoDraft) => void;
 }
 
 const MESES = [
@@ -44,10 +50,15 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps = {}) {
+export function AppHeader({
+  selectedDate,
+  onSelectDate,
+  onNovoAgendamento,
+}: AppHeaderProps = {}) {
   const [aberto, setAberto] = useState(false);
   const [mes, setMes] = useState<Date>(new Date());
   const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
+  const [wizardAberto, setWizardAberto] = useState(false);
 
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
@@ -158,14 +169,31 @@ export function AppHeader({ selectedDate, onSelectDate }: AppHeaderProps = {}) {
             Pacientes
           </Link>
 
-          <button
+<button
             type="button"
+            onClick={() => setWizardAberto(true)}
             className="h-9 rounded-xl bg-ink px-5 text-xs font-bold uppercase tracking-wider text-cream shadow-sm transition-all hover:bg-ink/90 active:translate-y-px"
           >
             Novo agendamento
           </button>
         </div>
       </div>
+
+      <NovoAgendamentoWizard
+        open={wizardAberto}
+        onOpenChange={setWizardAberto}
+        dataInicial={data}
+        onSalvar={(draft) => {
+          if (onNovoAgendamento) {
+            onNovoAgendamento(draft);
+          } else {
+            toast.info("Esta ação exige confirmação humana", {
+              description: "Disponível na versão conectada.",
+            });
+          }
+          setWizardAberto(false);
+        }}
+      />
     </header>
   );
 }
