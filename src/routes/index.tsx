@@ -402,6 +402,12 @@ function handleAction(appointment: Appointment, action: Action) {
               appointment={appointment}
               index={i}
               onAction={handleAction}
+              notas={notas[appointment.id] ?? []}
+              etiquetas={etiquetas[appointment.id] ?? []}
+              onAddNota={(texto) => addNota(appointment.id, texto)}
+              onRemoveNota={(indice) => removeNota(appointment.id, indice)}
+              onAddEtiqueta={(texto, cor) => addEtiqueta(appointment.id, texto, cor)}
+              onRemoveEtiqueta={(idEtiqueta) => removeEtiqueta(appointment.id, idEtiqueta)}
             />
           ))}
           {visiveis.length === 0 && (
