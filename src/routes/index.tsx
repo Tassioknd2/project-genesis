@@ -180,6 +180,32 @@ function handleAction(appointment: Appointment, action: Action) {
     });
   }
 
+  function addNota(id: string, texto: string) {
+    setNotas((atual) => ({ ...atual, [id]: [...(atual[id] ?? []), texto] }));
+    toast.success("Observação adicionada");
+  }
+
+  function removeNota(id: string, indice: number) {
+    setNotas((atual) => ({
+      ...atual,
+      [id]: (atual[id] ?? []).filter((_, i) => i !== indice),
+    }));
+  }
+
+  function addEtiqueta(id: string, texto: string, cor: EtiquetaCor) {
+    const etiqueta: Etiqueta = { id: `et-${Date.now()}`, texto, cor };
+    setEtiquetas((atual) => ({ ...atual, [id]: [...(atual[id] ?? []), etiqueta] }));
+  }
+
+  function removeEtiqueta(id: string, idEtiqueta: string) {
+    setEtiquetas((atual) => ({
+      ...atual,
+      [id]: (atual[id] ?? []).filter((e) => e.id !== idEtiqueta),
+    }));
+  }
+
+
+
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
 <AppHeader
