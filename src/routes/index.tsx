@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
+import { EditarRegistroDialog, type EdicaoResultado } from "@/components/EditarRegistroDialog";
 import { ScrollProgressHeart } from "@/components/ScrollProgressHeart";
 import type { NovoAgendamentoDraft } from "@/components/NovoAgendamentoWizard";
 import {
@@ -72,6 +73,7 @@ function AgendaPage() {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
+  const [editando, setEditando] = useState<Appointment | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
@@ -183,6 +185,21 @@ function handleAction(appointment: Appointment, action: Action) {
     toast.success(`Agendamento criado — ${draft.paciente.nome.split(" ")[0]}`, {
       description: `${draft.tipo} · ${draft.hora} · ${statusInfo.agendado.rotulo}`,
     });
+  }
+
+  function salvarEdicao(appointment: Appointment, resultado: EdicaoResultado) {
+    const indice = pacientes.findIndex((p) => p.id === resultado.paciente.id);
+    if (indice >= 0) pacientes[indice] = resultado.paciente;
+
+    setAlteracoes((atual) => ({
+      ...atual,
+      [appointment.id]: {
+        ...(atual[appointment.id] ?? appointment),
+        paciente: resultado.paciente,
+        ...(resultado.agendamento ?? {}),
+      },
+    }));
+    toast.success("Informações atualizadas");
   }
 
   function addNota(id: string, texto: string) {
@@ -439,6 +456,7 @@ function handleAction(appointment: Appointment, action: Action) {
               onRemoveNota={(indice) => removeNota(appointment.id, indice)}
               onAddEtiqueta={(texto, cor) => addEtiqueta(appointment.id, texto, cor)}
               onRemoveEtiqueta={(idEtiqueta) => removeEtiqueta(appointment.id, idEtiqueta)}
+              onEditar={() => setEditando(appointment)}
             />
           ))}
           {visiveis.length === 0 && (
@@ -460,6 +478,16 @@ function handleAction(appointment: Appointment, action: Action) {
             </div>
           )}
         </section>
+
+        {editando && (
+          <EditarRegistroDialog
+            open={!!editando}
+            onOpenChange={(aberto) => !aberto && setEditando(null)}
+            paciente={editando.paciente}
+            appointment={editando}
+            onSalvar={(resultado) => salvarEdicao(editando, resultado)}
+          />
+        )}
 
         <footer className="mt-12 flex items-center justify-between border-t border-line2/30 py-8 opacity-60">
           <span className="font-mono text-[10px] uppercase tracking-widest">

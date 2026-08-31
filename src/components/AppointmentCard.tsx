@@ -3,6 +3,7 @@ import { BadgeCheck, Mail, MailOpen, MessageSquareText, Plus, StickyNote, Tag, X
 import type { Appointment, AppointmentStatus, Etiqueta, EtiquetaCor } from "@/lib/agenda-data";
 import { ETIQUETA_CORES, classeDaCor } from "@/lib/agenda-data";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BotaoCaneta } from "@/components/BotaoCaneta";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,7 @@ interface AppointmentCardProps {
   onRemoveNota?: (indice: number) => void;
   onAddEtiqueta?: (texto: string, cor: EtiquetaCor) => void;
   onRemoveEtiqueta?: (id: string) => void;
+  onEditar?: () => void;
 }
 
 export function AppointmentCard({
@@ -75,6 +77,7 @@ export function AppointmentCard({
   onRemoveNota,
   onAddEtiqueta,
   onRemoveEtiqueta,
+  onEditar,
 }: AppointmentCardProps) {
   const { paciente } = appointment;
   const particular = paciente.convenio === "Particular";
@@ -246,6 +249,7 @@ export function AppointmentCard({
             </div>
 
             <div className="flex items-center gap-2">
+              {onEditar && <BotaoCaneta onClick={onEditar} rotulo="Caneta" />}
               {concluido && (
                 <button
                   type="button"
