@@ -114,8 +114,6 @@ export const statusInfo: Record<
 
 // --- Agenda por data (dados fictícios determinísticos) ---
 
-export const HOJE_ISO = "2026-08-29";
-
 export function toISODate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -126,6 +124,37 @@ export function toISODate(date: Date): string {
 export function fromISODate(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y!, (m ?? 1) - 1, d ?? 1);
+}
+
+/** Data de hoje, sincronizada com o relógio da máquina do usuário. */
+export const HOJE_ISO = toISODate(new Date());
+
+// --- Etiquetas (estilo Trello) ---
+
+export const ETIQUETA_CORES = [
+  { id: "ambar", rotulo: "Âmbar", classe: "tag-ambar" },
+  { id: "verde", rotulo: "Verde", classe: "tag-verde" },
+  { id: "azul", rotulo: "Azul", classe: "tag-azul" },
+  { id: "vermelho", rotulo: "Vermelho", classe: "tag-vermelho" },
+  { id: "roxo", rotulo: "Roxo", classe: "tag-roxo" },
+  { id: "cinza", rotulo: "Cinza", classe: "tag-cinza" },
+] as const;
+
+export type EtiquetaCor = (typeof ETIQUETA_CORES)[number]["id"];
+
+export interface Etiqueta {
+  id: string;
+  texto: string;
+  cor: EtiquetaCor;
+}
+
+export function classeDaCor(cor: EtiquetaCor): string {
+  return ETIQUETA_CORES.find((c) => c.id === cor)?.classe ?? "tag-cinza";
+}
+
+/** Ordena uma agenda pelo horário (HH:MM), crescente. */
+export function ordenarPorHorario(lista: Appointment[]): Appointment[] {
+  return [...lista].sort((a, b) => a.hora.localeCompare(b.hora));
 }
 
 function hash(str: string): number {
