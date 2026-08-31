@@ -169,14 +169,31 @@ export function AppHeader({
             Pacientes
           </Link>
 
-          <button
+<button
             type="button"
+            onClick={() => setWizardAberto(true)}
             className="h-9 rounded-xl bg-ink px-5 text-xs font-bold uppercase tracking-wider text-cream shadow-sm transition-all hover:bg-ink/90 active:translate-y-px"
           >
             Novo agendamento
           </button>
         </div>
       </div>
+
+      <NovoAgendamentoWizard
+        open={wizardAberto}
+        onOpenChange={setWizardAberto}
+        dataInicial={data}
+        onSalvar={(draft) => {
+          if (onNovoAgendamento) {
+            onNovoAgendamento(draft);
+          } else {
+            toast.info("Esta ação exige confirmação humana", {
+              description: "Disponível na versão conectada.",
+            });
+          }
+          setWizardAberto(false);
+        }}
+      />
     </header>
   );
 }
