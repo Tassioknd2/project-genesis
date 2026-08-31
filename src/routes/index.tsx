@@ -13,11 +13,14 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import { ScrollProgressHeart } from "@/components/ScrollProgressHeart";
+import type { NovoAgendamentoDraft } from "@/components/NovoAgendamentoWizard";
 import {
   HOJE_ISO,
+  MEDICO,
   categoriaDe,
   fromISODate,
   getAgendaPorData,
+  pacientes,
   statusInfo,
   toISODate,
   type Appointment,
@@ -99,7 +102,7 @@ function AgendaPage() {
     [agenda, filtro, busca, categoria],
   );
 
-  function handleAction(appointment: Appointment, action: Action) {
+function handleAction(appointment: Appointment, action: Action) {
     if (action.status) {
       setAgenda((atual) =>
         atual.map((a) =>
@@ -123,6 +126,42 @@ function AgendaPage() {
         description: "Esta ação exige confirmação humana (disponível na versão conectada).",
       });
     }
+  }
+
+  function handleNovoAgendamento(draft: NovoAgendamentoDraft) {
+    // Registra paciente novo no cadastro (dados em memória).
+    if (!pacientes.some((p) => p.id === draft.paciente.id)) {
+      pacientes.push(draft.paciente);
+    }
+
+    const novo: Appointment = {
+      id: `novo-${Date.now()}`,
+      hora: draft.hora,
+      duracaoMin: draft.duracaoMin,
+      paciente: draft.paciente,
+      tipo: draft.tipo,
+      medico: MEDICO,
+      status: "agendado",
+    };
+
+    const isoDraft = toISODate(draft.data);
+    const dataAtual = isoSelecionado;
+
+    // Se o agendamento é para outra data, muda a agenda para ela.
+    if (isoDraft !== dataAtual) {
+      setDataSelecionada(draft.data);
+    }
+
+    setAgenda((atual) =>
+      isoDraft === dataAtual ? [...atual, novo] : [novo, ...getAgendaPorData(isoDraft)],
+    );
+    setFiltro("todos");
+    setBusca("");
+    setCategoria(null);
+
+    toast.success(`Agendamento criado — ${draft.paciente.nome.split(" ")[0]}`, {
+      description: `${draft.tipo} · ${draft.hora} · ${statusInfo.agendado.rotulo}`,
+    });
   }
 
   return (
