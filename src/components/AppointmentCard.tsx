@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, MailOpen, Plus, StickyNote, Tag, X } from "lucide-react";
+import { BadgeCheck, Mail, MailOpen, MessageSquareText, Plus, StickyNote, Tag, X } from "lucide-react";
 import type { Appointment, AppointmentStatus, Etiqueta, EtiquetaCor } from "@/lib/agenda-data";
 import { ETIQUETA_CORES, classeDaCor } from "@/lib/agenda-data";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -119,17 +119,32 @@ export function AppointmentCard({
       <div className="flex">
         <div
           className={cn(
-            "flex w-24 shrink-0 flex-col items-center justify-center border-r py-5",
+            "flex w-24 shrink-0 flex-col items-center justify-center gap-1 border-r py-5",
             concluido ? "border-ok/25 bg-ok/10" : "border-line bg-line/20",
           )}
         >
-          <span className="font-mono text-lg font-bold tracking-tighter">
-            {appointment.hora}
-          </span>
-          <span className="font-mono text-[10px] uppercase text-inksoft/60">
-            {appointment.duracaoMin} min
-          </span>
+          {concluido ? (
+            <>
+              <span className="flex size-9 items-center justify-center rounded-full border-2 border-ok/50 bg-ok/15 text-ok">
+                <BadgeCheck className="size-5" aria-hidden />
+              </span>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-ok">
+                Concluído
+              </span>
+              <span className="font-mono text-[10px] text-inksoft/60">{appointment.hora}</span>
+            </>
+          ) : (
+            <>
+              <span className="font-mono text-lg font-bold tracking-tighter">
+                {appointment.hora}
+              </span>
+              <span className="font-mono text-[10px] uppercase text-inksoft/60">
+                {appointment.duracaoMin} min
+              </span>
+            </>
+          )}
         </div>
+
 
         <div className="flex-1 p-5">
           {/* Etiquetas (estilo Trello) */}
@@ -247,22 +262,22 @@ export function AppointmentCard({
             </div>
           </div>
 
-          {/* Observações visíveis no cartão */}
+          {/* Observações visíveis no cartão — discretas, apenas lembrete */}
           {todasNotas.length > 0 && !selado && (
-            <ul className="mt-3 space-y-1.5">
+            <ul className="mt-2 space-y-1">
               {todasNotas.map((nota, i) => (
                 <li
                   key={`${nota}-${i}`}
-                  className="flex items-start gap-2 rounded-lg border border-warn/25 bg-warnbg/60 px-3 py-2 text-xs leading-snug text-ink"
+                  className="flex items-start gap-1.5 text-[11px] leading-snug text-inksoft/80"
                 >
-                  <StickyNote className="mt-0.5 size-3.5 shrink-0 text-warn" aria-hidden />
-                  <span className="flex-1">{nota}</span>
+                  <StickyNote className="mt-0.5 size-3 shrink-0 opacity-50" aria-hidden />
+                  <span className="flex-1 italic">{nota}</span>
                   {onRemoveNota && i >= todasNotas.length - notas.length && (
                     <button
                       type="button"
                       aria-label="Remover observação"
                       onClick={() => onRemoveNota(i - (todasNotas.length - notas.length))}
-                      className="text-inksoft opacity-0 transition-opacity group-hover:opacity-70 hover:opacity-100"
+                      className="text-inksoft opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100"
                     >
                       <X className="size-3" />
                     </button>
@@ -273,22 +288,27 @@ export function AppointmentCard({
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {/* Botão de observação — sempre visível, com contagem */}
+            {/* Botão de observação — só o ícone; rótulo aparece no hover */}
             <Popover open={notasAbertas} onOpenChange={setNotasAbertas}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-8 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-[11px] font-semibold uppercase tracking-wide text-inksoft transition-colors hover:border-ink/30"
+                  aria-label="Observação"
+                  title="Observação"
+                  className="group/obs flex h-8 items-center gap-1.5 rounded-lg border border-line bg-card px-2 text-[11px] font-semibold uppercase tracking-wide text-inksoft transition-all hover:border-ink/30 hover:px-3"
                 >
-                  <StickyNote className="size-3.5" aria-hidden />
-                  Observação
+                  <MessageSquareText className="size-3.5 shrink-0" aria-hidden />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/obs:max-w-[7rem] group-hover/obs:opacity-100">
+                    Observação
+                  </span>
                   {todasNotas.length > 0 && (
-                    <span className="rounded-full bg-warnbg px-1.5 font-mono text-[10px] font-bold tabular-nums text-warn">
+                    <span className="rounded-full bg-mutbg px-1.5 font-mono text-[10px] font-bold tabular-nums text-inksoft">
                       {todasNotas.length}
                     </span>
                   )}
                 </button>
               </PopoverTrigger>
+
               <PopoverContent align="start" className="w-72 space-y-3 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
                   Observações de {paciente.nome.split(" ")[0]}

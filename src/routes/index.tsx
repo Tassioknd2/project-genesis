@@ -162,6 +162,11 @@ function handleAction(appointment: Appointment, action: Action) {
 
     const isoDraft = toISODate(draft.data);
 
+    if (draft.observacoes) {
+      const obs = draft.observacoes;
+      setNotas((atual) => ({ ...atual, [novo.id]: [...(atual[novo.id] ?? []), obs] }));
+    }
+
     setExtras((atual) => ({
       ...atual,
       [isoDraft]: [...(atual[isoDraft] ?? []), novo],
