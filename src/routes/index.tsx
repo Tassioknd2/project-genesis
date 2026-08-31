@@ -110,17 +110,14 @@ function AgendaPage() {
 
 function handleAction(appointment: Appointment, action: Action) {
     if (action.status) {
-      setAgenda((atual) =>
-        atual.map((a) =>
-          a.id === appointment.id
-            ? {
-                ...a,
-                status: action.status!,
-                pendencia: undefined,
-              }
-            : a,
-        ),
-      );
+      setAlteracoes((atual) => ({
+        ...atual,
+        [appointment.id]: {
+          ...appointment,
+          status: action.status!,
+          pendencia: undefined,
+        },
+      }));
       toast.success(
         `${appointment.paciente.nome.split(" ")[0]} — ${action.label.toLowerCase()}`,
         {
@@ -151,19 +148,19 @@ function handleAction(appointment: Appointment, action: Action) {
     };
 
     const isoDraft = toISODate(draft.data);
-    const dataAtual = isoSelecionado;
 
-    // Se o agendamento é para outra data, muda a agenda para ela.
-    if (isoDraft !== dataAtual) {
-      setDataSelecionada(draft.data);
-    }
-
-    setAgenda((atual) =>
-      isoDraft === dataAtual ? [...atual, novo] : [novo, ...getAgendaPorData(isoDraft)],
-    );
+    setExtras((atual) => ({
+      ...atual,
+      [isoDraft]: [...(atual[isoDraft] ?? []), novo],
+    }));
     setFiltro("todos");
     setBusca("");
     setCategoria(null);
+
+    // Se o agendamento é para outra data, navega até ela.
+    if (isoDraft !== isoSelecionado) {
+      setDataSelecionada(draft.data);
+    }
 
     toast.success(`Agendamento criado — ${draft.paciente.nome.split(" ")[0]}`, {
       description: `${draft.tipo} · ${draft.hora} · ${statusInfo.agendado.rotulo}`,
