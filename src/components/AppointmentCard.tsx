@@ -119,17 +119,32 @@ export function AppointmentCard({
       <div className="flex">
         <div
           className={cn(
-            "flex w-24 shrink-0 flex-col items-center justify-center border-r py-5",
+            "flex w-24 shrink-0 flex-col items-center justify-center gap-1 border-r py-5",
             concluido ? "border-ok/25 bg-ok/10" : "border-line bg-line/20",
           )}
         >
-          <span className="font-mono text-lg font-bold tracking-tighter">
-            {appointment.hora}
-          </span>
-          <span className="font-mono text-[10px] uppercase text-inksoft/60">
-            {appointment.duracaoMin} min
-          </span>
+          {concluido ? (
+            <>
+              <span className="flex size-9 items-center justify-center rounded-full border-2 border-ok/50 bg-ok/15 text-ok">
+                <BadgeCheck className="size-5" aria-hidden />
+              </span>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-ok">
+                Concluído
+              </span>
+              <span className="font-mono text-[10px] text-inksoft/60">{appointment.hora}</span>
+            </>
+          ) : (
+            <>
+              <span className="font-mono text-lg font-bold tracking-tighter">
+                {appointment.hora}
+              </span>
+              <span className="font-mono text-[10px] uppercase text-inksoft/60">
+                {appointment.duracaoMin} min
+              </span>
+            </>
+          )}
         </div>
+
 
         <div className="flex-1 p-5">
           {/* Etiquetas (estilo Trello) */}
