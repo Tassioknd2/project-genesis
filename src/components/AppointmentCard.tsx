@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, MailOpen, Plus, StickyNote, Tag, X } from "lucide-react";
+import { BadgeCheck, Mail, MailOpen, MessageSquareText, Plus, StickyNote, Tag, X } from "lucide-react";
 import type { Appointment, AppointmentStatus, Etiqueta, EtiquetaCor } from "@/lib/agenda-data";
 import { ETIQUETA_CORES, classeDaCor } from "@/lib/agenda-data";
 import { StatusBadge } from "@/components/StatusBadge";
