@@ -20,12 +20,15 @@ import {
   categoriaDe,
   fromISODate,
   getAgendaPorData,
+  ordenarPorHorario,
   pacientes,
   statusInfo,
   toISODate,
   type Appointment,
   type AppointmentStatus,
   type CategoriaAtendimento,
+  type Etiqueta,
+  type EtiquetaCor,
 } from "@/lib/agenda-data";
 
 export const Route = createFileRoute("/")({
@@ -64,21 +67,31 @@ function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
   const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
+  const [notas, setNotas] = useState<Record<string, string[]>>({});
+  const [etiquetas, setEtiquetas] = useState<Record<string, Etiqueta[]>>({});
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
-  // Agenda do dia = base fictícia + criados na sessão + alterações de status.
+  // Ao abrir o sistema, a agenda começa sempre no dia atual da máquina.
+  useEffect(() => {
+    const hoje = new Date();
+    if (toISODate(hoje) !== HOJE_ISO) setDataSelecionada(hoje);
+  }, []);
+
+  // Agenda do dia = base fictícia + criados na sessão + alterações de status,
+  // sempre ordenada por horário.
   const agenda = useMemo(() => {
     const base = [...getAgendaPorData(isoSelecionado), ...(extras[isoSelecionado] ?? [])];
-    return base.map((a) => alteracoes[a.id] ?? a);
+    return ordenarPorHorario(base.map((a) => alteracoes[a.id] ?? a));
   }, [isoSelecionado, extras, alteracoes]);
 
   useEffect(() => {
     setFiltro("todos");
   }, [isoSelecionado]);
+
 
   const confirmados = agenda.filter((a) => a.status === "confirmado" || a.status === "concluido").length;
   const recusados = agenda.filter((a) => a.pendencia === "recusado").length;
@@ -166,6 +179,32 @@ function handleAction(appointment: Appointment, action: Action) {
       description: `${draft.tipo} · ${draft.hora} · ${statusInfo.agendado.rotulo}`,
     });
   }
+
+  function addNota(id: string, texto: string) {
+    setNotas((atual) => ({ ...atual, [id]: [...(atual[id] ?? []), texto] }));
+    toast.success("Observação adicionada");
+  }
+
+  function removeNota(id: string, indice: number) {
+    setNotas((atual) => ({
+      ...atual,
+      [id]: (atual[id] ?? []).filter((_, i) => i !== indice),
+    }));
+  }
+
+  function addEtiqueta(id: string, texto: string, cor: EtiquetaCor) {
+    const etiqueta: Etiqueta = { id: `et-${Date.now()}`, texto, cor };
+    setEtiquetas((atual) => ({ ...atual, [id]: [...(atual[id] ?? []), etiqueta] }));
+  }
+
+  function removeEtiqueta(id: string, idEtiqueta: string) {
+    setEtiquetas((atual) => ({
+      ...atual,
+      [id]: (atual[id] ?? []).filter((e) => e.id !== idEtiqueta),
+    }));
+  }
+
+
 
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
@@ -389,6 +428,12 @@ function handleAction(appointment: Appointment, action: Action) {
               appointment={appointment}
               index={i}
               onAction={handleAction}
+              notas={notas[appointment.id] ?? []}
+              etiquetas={etiquetas[appointment.id] ?? []}
+              onAddNota={(texto) => addNota(appointment.id, texto)}
+              onRemoveNota={(indice) => removeNota(appointment.id, indice)}
+              onAddEtiqueta={(texto, cor) => addEtiqueta(appointment.id, texto, cor)}
+              onRemoveEtiqueta={(idEtiqueta) => removeEtiqueta(appointment.id, idEtiqueta)}
             />
           ))}
           {visiveis.length === 0 && (
