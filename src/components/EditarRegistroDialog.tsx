@@ -78,8 +78,9 @@ export function EditarRegistroDialog({
       idade: Number(idade) || paciente.idade,
       telefone: telefone.trim(),
       convenio: convenio.trim() || paciente.convenio,
-      ...(observacoes.trim() ? { observacoes: observacoes.trim() } : { observacoes: undefined }),
     };
+    if (observacoes.trim()) atualizado.observacoes = observacoes.trim();
+    else delete atualizado.observacoes;
 
     onSalvar({
       paciente: atualizado,
