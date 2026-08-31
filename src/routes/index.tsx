@@ -20,12 +20,15 @@ import {
   categoriaDe,
   fromISODate,
   getAgendaPorData,
+  ordenarPorHorario,
   pacientes,
   statusInfo,
   toISODate,
   type Appointment,
   type AppointmentStatus,
   type CategoriaAtendimento,
+  type Etiqueta,
+  type EtiquetaCor,
 } from "@/lib/agenda-data";
 
 export const Route = createFileRoute("/")({
