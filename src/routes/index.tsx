@@ -67,21 +67,31 @@ function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
   const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
+  const [notas, setNotas] = useState<Record<string, string[]>>({});
+  const [etiquetas, setEtiquetas] = useState<Record<string, Etiqueta[]>>({});
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
-  // Agenda do dia = base fictícia + criados na sessão + alterações de status.
+  // Ao abrir o sistema, a agenda começa sempre no dia atual da máquina.
+  useEffect(() => {
+    const hoje = new Date();
+    if (toISODate(hoje) !== HOJE_ISO) setDataSelecionada(hoje);
+  }, []);
+
+  // Agenda do dia = base fictícia + criados na sessão + alterações de status,
+  // sempre ordenada por horário.
   const agenda = useMemo(() => {
     const base = [...getAgendaPorData(isoSelecionado), ...(extras[isoSelecionado] ?? [])];
-    return base.map((a) => alteracoes[a.id] ?? a);
+    return ordenarPorHorario(base.map((a) => alteracoes[a.id] ?? a));
   }, [isoSelecionado, extras, alteracoes]);
 
   useEffect(() => {
     setFiltro("todos");
   }, [isoSelecionado]);
+
 
   const confirmados = agenda.filter((a) => a.status === "confirmado" || a.status === "concluido").length;
   const recusados = agenda.filter((a) => a.pendencia === "recusado").length;
