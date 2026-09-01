@@ -269,7 +269,7 @@ function handleSalvarDraft(draft: NovoAgendamentoDraft) {
                       </div>
                     </div>
 
-<div className="flex shrink-0 items-center gap-1.5">
+                      <div className="flex shrink-0 items-center gap-1.5">
                       <BotaoCaneta
                         onClick={() => setPacienteParaEditar(p)}
                         rotulo="Editar"
