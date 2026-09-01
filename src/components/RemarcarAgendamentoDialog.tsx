@@ -169,7 +169,7 @@ onConfirmarRemarcacao({
       paciente: pacienteSelecionado,
       tipos,
       duracaoMin: duracaoTotal,
-      motivo: motivo.trim() || undefined,
+      ...(motivo.trim() ? { motivo: motivo.trim() } : {}),
     });
     onOpenChange(false);
   }
