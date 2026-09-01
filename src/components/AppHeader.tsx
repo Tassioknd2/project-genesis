@@ -183,13 +183,13 @@ export function AppHeader({ selectedDate, onSelectDate, onNovoAgendamento }: App
 
         {/* Ações e Navegação */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link
+<Link
             to="/pacientes"
             className={cn(
-              "hidden items-center gap-1.5 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors md:inline-flex",
+              "hidden items-center gap-1.5 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-all md:inline-flex active:scale-95",
               pathname === "/pacientes"
                 ? "bg-ink text-cream shadow-xs"
-                : "text-inksoft hover:bg-card hover:text-ink",
+                : "border border-line2 bg-card/70 text-ink shadow-2xs hover:border-amber/50 hover:bg-card hover:text-amberdeep",
             )}
           >
             <Users className="size-3.5" />

@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
+import { BotaoCaneta } from "@/components/BotaoCaneta";
+import {
+  EditarRegistroDialog,
+  type EdicaoResultado,
+} from "@/components/EditarRegistroDialog";
 import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
@@ -57,14 +62,16 @@ function PacientesPage() {
   const [filtroConvenio, setFiltroConvenio] = useState<string>("todos");
   const [pacienteParaAgendar, setPacienteParaAgendar] = useState<Patient | null>(null);
   const [wizardAberto, setWizardAberto] = useState(false);
+  const [pacienteParaEditar, setPacienteParaEditar] = useState<Patient | null>(null);
+  const [versao, setVersao] = useState(0);
 
-  const convenios = useMemo(() => {
+const convenios = useMemo(() => {
     const set = new Set<string>();
     pacientes.forEach((p) => {
       if (p.convenio) set.add(p.convenio);
     });
     return Array.from(set);
-  }, []);
+  }, [versao]);
 
   const visiveis = useMemo(() => {
     return pacientes.filter((p) => {
@@ -77,10 +84,10 @@ function PacientesPage() {
           p.convenio.toLowerCase().includes(q) ||
           (p.observacoes && p.observacoes.toLowerCase().includes(q))
         );
-      }
+}
       return true;
     });
-  }, [busca, filtroConvenio]);
+  }, [busca, filtroConvenio, versao]);
 
   const totalParticulares = pacientes.filter((p) =>
     p.convenio.toLowerCase().includes("particular"),
@@ -92,11 +99,19 @@ function PacientesPage() {
     setWizardAberto(true);
   }
 
-  function handleSalvarDraft(draft: NovoAgendamentoDraft) {
+function handleSalvarDraft(draft: NovoAgendamentoDraft) {
     toast.success(`Agendamento realizado para ${draft.paciente.nome}`, {
       description: `${draft.tipo} agendado às ${draft.hora}.`,
     });
     setWizardAberto(false);
+  }
+
+  function salvarEdicao(resultado: EdicaoResultado) {
+    const indice = pacientes.findIndex((p) => p.id === resultado.paciente.id);
+    if (indice >= 0) pacientes[indice] = resultado.paciente;
+    setVersao((v) => v + 1);
+    setPacienteParaEditar(null);
+    toast.success("Informações atualizadas");
   }
 
   return (
@@ -254,16 +269,22 @@ function PacientesPage() {
                       </div>
                     </div>
 
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider",
-                        particular
-                          ? "border border-amber/30 bg-amber/10 text-amberdeep"
-                          : "border border-line2 bg-mutbg text-inksoft",
-                      )}
-                    >
-                      {p.convenio}
-                    </span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                      <BotaoCaneta
+                        onClick={() => setPacienteParaEditar(p)}
+                        rotulo="Editar"
+                      />
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider",
+                          particular
+                            ? "border border-amber/30 bg-amber/10 text-amberdeep"
+                            : "border border-line2 bg-mutbg text-inksoft",
+                        )}
+                      >
+                        {p.convenio}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Informações Clínicas */}
@@ -346,12 +367,23 @@ function PacientesPage() {
         </footer>
       </main>
 
-      <NovoAgendamentoWizard
+<NovoAgendamentoWizard
         open={wizardAberto}
         onOpenChange={setWizardAberto}
         pacienteInicial={pacienteParaAgendar}
         onSalvar={handleSalvarDraft}
       />
+
+      {pacienteParaEditar && (
+        <EditarRegistroDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPacienteParaEditar(null);
+          }}
+          paciente={pacienteParaEditar}
+          onSalvar={salvarEdicao}
+        />
+      )}
     </div>
   );
 }
