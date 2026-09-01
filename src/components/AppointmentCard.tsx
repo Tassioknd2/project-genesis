@@ -330,13 +330,16 @@ export function AppointmentCard({
               {/* Adicionar etiqueta */}
               <Popover open={etiquetaAberta} onOpenChange={setEtiquetaAberta}>
                 <PopoverTrigger asChild>
-                  <button
+<button
                     type="button"
                     aria-label="Adicionar etiqueta"
                     title="Adicionar etiqueta"
-                    className="flex size-6 items-center justify-center rounded-md border border-dashed border-line2 text-inksoft transition-colors hover:border-amber hover:text-amber active:scale-95"
+                    className="group/etq flex h-6.5 items-center rounded-full border border-dashed border-line2 px-1.5 text-inksoft transition-all hover:border-amber hover:text-amber active:scale-90"
                   >
-                    <Plus className="size-3" />
+                    <Plus className="size-3 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap font-mono text-[10px] font-bold uppercase tracking-wider opacity-0 transition-all duration-200 group-hover/etq:ml-1 group-hover/etq:max-w-[6rem] group-hover/etq:opacity-100">
+                      Etiqueta
+                    </span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-64 space-y-3 p-3">
@@ -381,15 +384,22 @@ export function AppointmentCard({
             <div className="flex items-center gap-1.5">
               {onEditar && <BotaoCaneta onClick={onEditar} rotulo="Editar dados" />}
               {concluido && (
-                <button
+<button
                   type="button"
                   onClick={() => setEnvelopeAberto((v) => !v)}
                   aria-expanded={envelopeAberto}
+                  aria-label={selado ? "Abrir detalhes" : "Ocultar detalhes"}
                   title={selado ? "Atendimento concluído — abrir detalhes" : "Ocultar detalhes"}
-                  className="flex items-center gap-1.5 rounded-lg border border-ok/30 bg-ok/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ok transition-colors hover:bg-ok/20"
+                  className="group/env flex h-8 items-center rounded-full border border-ok/30 bg-ok/10 px-2 font-mono text-[10px] font-bold uppercase tracking-wider text-ok transition-all hover:bg-ok/20 active:scale-90"
                 >
-                  {selado ? <Mail className="size-3" /> : <MailOpen className="size-3" />}
-                  <span>{selado ? "Selado" : "Aberto"}</span>
+                  {selado ? (
+                    <Mail className="size-3.5 shrink-0" />
+                  ) : (
+                    <MailOpen className="size-3.5 shrink-0" />
+                  )}
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/env:ml-1.5 group-hover/env:max-w-[6rem] group-hover/env:opacity-100">
+                    {selado ? "Selado" : "Aberto"}
+                  </span>
                 </button>
               )}
             </div>
@@ -444,33 +454,27 @@ export function AppointmentCard({
             )}
           </div>
 
-          {/* Observações Clínicas */}
+{/* Observações — discretas, apenas para relembrar */}
           {todasNotas.length > 0 && !selado && (
-            <div className="mt-3 space-y-1.5 rounded-xl border border-line bg-paper/50 p-2.5">
-              <div className="flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-wider text-inksoft">
-                <StickyNote className="size-3 text-amber" />
-                <span>Observações Clínicas</span>
-              </div>
-              <ul className="space-y-1">
-                {todasNotas.map((nota, i) => (
-                  <li
-                    key={`${nota}-${i}`}
-                    className="flex items-start justify-between gap-2 text-xs leading-relaxed text-ink/85"
-                  >
-                    <span>• {nota}</span>
-                    {onRemoveNota && i >= todasNotas.length - notas.length && (
-                      <button
-                        type="button"
-                        aria-label="Remover observação"
-                        onClick={() => onRemoveNota(i - (todasNotas.length - notas.length))}
-                        className="text-inksoft/60 transition-colors hover:text-bad"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-2.5 space-y-1 border-l border-line/70 pl-3">
+              {todasNotas.map((nota, i) => (
+                <p
+                  key={`${nota}-${i}`}
+                  className="group/obs flex items-start gap-1.5 text-[11px] italic leading-relaxed text-inksoft/70"
+                >
+                  <span className="min-w-0">{nota}</span>
+                  {onRemoveNota && i >= todasNotas.length - notas.length && (
+                    <button
+                      type="button"
+                      aria-label="Remover observação"
+                      onClick={() => onRemoveNota(i - (todasNotas.length - notas.length))}
+                      className="shrink-0 text-inksoft/40 opacity-0 transition-opacity group-hover/obs:opacity-100 hover:text-bad"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </p>
+              ))}
             </div>
           )}
 
@@ -480,15 +484,18 @@ export function AppointmentCard({
               {/* Adicionar Observação */}
               <Popover open={notasAbertas} onOpenChange={setNotasAbertas}>
                 <PopoverTrigger asChild>
-                  <button
+<button
                     type="button"
                     aria-label="Adicionar observação"
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line2/70 bg-card px-2.5 text-xs font-semibold text-inksoft transition-colors hover:border-amber/40 hover:text-ink active:scale-95"
+                    title={todasNotas.length > 0 ? `Nota (${todasNotas.length})` : "Adicionar observação"}
+                    className="group/nota relative flex h-8 items-center rounded-full border border-line2/70 bg-card px-2 text-inksoft transition-all hover:border-amber/40 hover:text-ink active:scale-90"
                   >
-                    <MessageSquareText className="size-3.5 text-amberdeep" aria-hidden />
-                    <span>Nota</span>
+                    <MessageSquareText className="size-4 shrink-0 text-amberdeep" aria-hidden />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/nota:ml-1.5 group-hover/nota:max-w-[8rem] group-hover/nota:opacity-100">
+                      Nota
+                    </span>
                     {todasNotas.length > 0 && (
-                      <span className="rounded-full bg-mutbg px-1.5 font-mono text-[10px] font-bold text-ink">
+                      <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-amber font-mono text-[9px] font-bold leading-none text-cream ring-2 ring-card">
                         {todasNotas.length}
                       </span>
                     )}
@@ -517,23 +524,26 @@ export function AppointmentCard({
               </Popover>
 
               {/* Botão de WhatsApp direto */}
-              <a
+<a
                 href={`https://wa.me/55${paciente.telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
                   mensagemWhatsApp,
                 )}`}
                 target="_blank"
                 rel="noreferrer"
+                aria-label="Abrir conversa no WhatsApp Web"
                 title="Abrir conversa no WhatsApp Web"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line2/70 bg-card px-2.5 text-xs font-semibold text-inksoft transition-colors hover:border-ok/50 hover:text-ok active:scale-95"
+                className="group/wa flex h-8 items-center rounded-full border border-line2/70 bg-card px-2 text-inksoft transition-all hover:border-ok/50 hover:text-ok active:scale-90"
               >
-                <MessageCircle className="size-3.5 text-ok" aria-hidden />
-                <span className="hidden sm:inline">WhatsApp</span>
+                <MessageCircle className="size-4 shrink-0 text-ok" aria-hidden />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/wa:ml-1.5 group-hover/wa:max-w-[8rem] group-hover/wa:opacity-100">
+                  WhatsApp
+                </span>
               </a>
             </div>
 
             {/* Ações de Status com Visibilidade Imediata */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {acoes.map((action) => {
+{acoes.map((action) => {
                 const Icon = action.icon;
                 const isPrimary = action.primary;
                 const isRemarcar =
@@ -543,6 +553,8 @@ export function AppointmentCard({
                   <button
                     key={action.label}
                     type="button"
+                    aria-label={action.label}
+                    title={action.label}
                     onClick={() => {
                       if (isRemarcar && onRemarcar) {
                         onRemarcar(appointment);
@@ -551,7 +563,7 @@ export function AppointmentCard({
                       }
                     }}
                     className={cn(
-                      "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all active:scale-95",
+                      "group/acao flex h-8 items-center rounded-full px-2 text-xs font-bold transition-all active:scale-90",
                       isPrimary &&
                         action.variant === "success" &&
                         "bg-ok text-cream shadow-xs hover:bg-ok/90",
@@ -566,8 +578,10 @@ export function AppointmentCard({
                         "border border-line2 bg-card text-inksoft hover:border-ink/30 hover:text-ink",
                     )}
                   >
-                    {Icon && <Icon className="size-3.5 shrink-0" aria-hidden />}
-                    <span>{action.label}</span>
+                    {Icon && <Icon className="size-4 shrink-0" aria-hidden />}
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/acao:ml-1.5 group-hover/acao:max-w-[12rem] group-hover/acao:opacity-100">
+                      {action.label}
+                    </span>
                   </button>
                 );
               })}

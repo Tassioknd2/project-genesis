@@ -309,24 +309,31 @@ function handleSalvarDraft(draft: NovoAgendamentoDraft) {
 
                 {/* Ações Rápidas de Atendimento */}
                 <div className="mt-4 flex items-center justify-between gap-2 border-t border-line/60 pt-3">
-                  <a
+<a
                     href={whatsappUrl}
                     target="_blank"
                     rel="noreferrer"
+                    aria-label="Conversar via WhatsApp"
                     title="Conversar via WhatsApp"
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line2 bg-paper/60 px-2.5 text-xs font-bold text-inksoft transition-colors hover:border-ok/50 hover:text-ok active:scale-95"
+                    className="group/wa2 flex h-8 items-center rounded-full border border-line2 bg-paper/60 px-2 text-inksoft transition-all hover:border-ok/50 hover:text-ok active:scale-90"
                   >
-                    <MessageCircle className="size-3.5 text-ok" />
-                    <span>WhatsApp</span>
+                    <MessageCircle className="size-4 shrink-0 text-ok" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/wa2:ml-1.5 group-hover/wa2:max-w-[8rem] group-hover/wa2:opacity-100">
+                      WhatsApp
+                    </span>
                   </a>
 
                   <button
                     type="button"
                     onClick={() => abrirAgendamento(p)}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-bold text-cream shadow-2xs transition-all hover:bg-ink/90 active:scale-95"
+                    aria-label="Agendar"
+                    title="Agendar"
+                    className="group/ag flex h-8 items-center rounded-full bg-ink px-2 text-xs font-bold text-cream shadow-2xs transition-all hover:bg-ink/90 active:scale-90"
                   >
-                    <CalendarPlus className="size-3.5 text-amber" />
-                    <span>Agendar</span>
+                    <CalendarPlus className="size-4 shrink-0 text-amber" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/ag:ml-1.5 group-hover/ag:max-w-[8rem] group-hover/ag:opacity-100">
+                      Agendar
+                    </span>
                   </button>
                 </div>
               </article>
