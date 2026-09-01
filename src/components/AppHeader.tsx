@@ -66,11 +66,17 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-export function AppHeader({ selectedDate, onSelectDate, onNovoAgendamento }: AppHeaderProps = {}) {
+export function AppHeader({
+  selectedDate,
+  onSelectDate,
+  onNovoAgendamento,
+  agendaDoDia,
+}: AppHeaderProps = {}) {
   const [aberto, setAberto] = useState(false);
   const [mes, setMes] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [wizardAberto, setWizardAberto] = useState(false);
+  const [visaoMesAberta, setVisaoMesAberta] = useState(false);
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
@@ -78,12 +84,18 @@ export function AppHeader({ selectedDate, onSelectDate, onNovoAgendamento }: App
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
 
+  const resolverAgenda = useCallback(
+    (iso: string) => (agendaDoDia ? agendaDoDia(iso) : getAgendaPorData(iso)),
+    [agendaDoDia],
+  );
+
   function abrir(open: boolean) {
     if (open) setMes(data);
     setAberto(open);
   }
 
   const isToday = toISODate(data) === HOJE_ISO;
+
 
   return (
     <header className="sticky top-0 z-30 border-b border-line2/60 bg-paper/90 backdrop-blur-md">
