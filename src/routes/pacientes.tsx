@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { pacientes } from "@/lib/agenda-data";
+import { toast } from "sonner";
+import { BotaoCaneta } from "@/components/BotaoCaneta";
+import { EditarRegistroDialog } from "@/components/EditarRegistroDialog";
+import { pacientes, type Patient } from "@/lib/agenda-data";
 
 export const Route = createFileRoute("/pacientes")({
   head: () => ({
@@ -26,6 +29,8 @@ export const Route = createFileRoute("/pacientes")({
 
 function PacientesPage() {
   const [busca, setBusca] = useState("");
+  const [editando, setEditando] = useState<Patient | null>(null);
+  const [versao, setVersao] = useState(0);
 
   const visiveis = useMemo(() => {
     if (!busca) return pacientes;
@@ -36,7 +41,7 @@ function PacientesPage() {
         p.telefone.includes(q) ||
         p.convenio.toLowerCase().includes(q),
     );
-  }, [busca]);
+  }, [busca, versao]);
 
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
@@ -78,7 +83,9 @@ function PacientesPage() {
                     {p.idade} anos · {p.telefone}
                   </p>
                 </div>
-                <span
+                <div className="flex items-center gap-2">
+                  <BotaoCaneta onClick={() => setEditando(p)} rotulo="Caneta" />
+                  <span
                   className={
                     p.convenio === "Particular"
                       ? "rounded-full border border-amber/20 bg-amber/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amberdeep"
@@ -86,7 +93,8 @@ function PacientesPage() {
                   }
                 >
                   {p.convenio}
-                </span>
+                  </span>
+                </div>
               </div>
               <div className="mt-3 flex items-center gap-2 text-xs text-inksoft">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-wider opacity-70">
@@ -110,6 +118,20 @@ function PacientesPage() {
             </div>
           )}
         </section>
+
+        {editando && (
+          <EditarRegistroDialog
+            open={!!editando}
+            onOpenChange={(aberto) => !aberto && setEditando(null)}
+            paciente={editando}
+            onSalvar={(resultado) => {
+              const i = pacientes.findIndex((x) => x.id === resultado.paciente.id);
+              if (i >= 0) pacientes[i] = resultado.paciente;
+              setVersao((v) => v + 1);
+              toast.success("Cadastro atualizado");
+            }}
+          />
+        )}
 
         <footer className="mt-12 border-t border-line2/30 py-8 text-center opacity-60">
           <Link
