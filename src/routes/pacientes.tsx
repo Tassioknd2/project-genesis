@@ -65,13 +65,13 @@ function PacientesPage() {
   const [pacienteParaEditar, setPacienteParaEditar] = useState<Patient | null>(null);
   const [versao, setVersao] = useState(0);
 
-  const convenios = useMemo(() => {
+const convenios = useMemo(() => {
     const set = new Set<string>();
     pacientes.forEach((p) => {
       if (p.convenio) set.add(p.convenio);
     });
     return Array.from(set);
-  }, []);
+  }, [versao]);
 
   const visiveis = useMemo(() => {
     return pacientes.filter((p) => {
@@ -84,10 +84,10 @@ function PacientesPage() {
           p.convenio.toLowerCase().includes(q) ||
           (p.observacoes && p.observacoes.toLowerCase().includes(q))
         );
-      }
+}
       return true;
     });
-  }, [busca, filtroConvenio]);
+  }, [busca, filtroConvenio, versao]);
 
   const totalParticulares = pacientes.filter((p) =>
     p.convenio.toLowerCase().includes("particular"),
@@ -99,11 +99,19 @@ function PacientesPage() {
     setWizardAberto(true);
   }
 
-  function handleSalvarDraft(draft: NovoAgendamentoDraft) {
+function handleSalvarDraft(draft: NovoAgendamentoDraft) {
     toast.success(`Agendamento realizado para ${draft.paciente.nome}`, {
       description: `${draft.tipo} agendado às ${draft.hora}.`,
     });
     setWizardAberto(false);
+  }
+
+  function salvarEdicao(resultado: EdicaoResultado) {
+    const indice = pacientes.findIndex((p) => p.id === resultado.paciente.id);
+    if (indice >= 0) pacientes[indice] = resultado.paciente;
+    setVersao((v) => v + 1);
+    setPacienteParaEditar(null);
+    toast.success("Informações atualizadas");
   }
 
   return (
