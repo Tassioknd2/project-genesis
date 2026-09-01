@@ -269,16 +269,22 @@ function handleSalvarDraft(draft: NovoAgendamentoDraft) {
                       </div>
                     </div>
 
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider",
-                        particular
-                          ? "border border-amber/30 bg-amber/10 text-amberdeep"
-                          : "border border-line2 bg-mutbg text-inksoft",
-                      )}
-                    >
-                      {p.convenio}
-                    </span>
+<div className="flex shrink-0 items-center gap-1.5">
+                      <BotaoCaneta
+                        onClick={() => setPacienteParaEditar(p)}
+                        rotulo="Editar"
+                      />
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider",
+                          particular
+                            ? "border border-amber/30 bg-amber/10 text-amberdeep"
+                            : "border border-line2 bg-mutbg text-inksoft",
+                        )}
+                      >
+                        {p.convenio}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Informações Clínicas */}
@@ -361,12 +367,23 @@ function handleSalvarDraft(draft: NovoAgendamentoDraft) {
         </footer>
       </main>
 
-      <NovoAgendamentoWizard
+<NovoAgendamentoWizard
         open={wizardAberto}
         onOpenChange={setWizardAberto}
         pacienteInicial={pacienteParaAgendar}
         onSalvar={handleSalvarDraft}
       />
+
+      {pacienteParaEditar && (
+        <EditarRegistroDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPacienteParaEditar(null);
+          }}
+          paciente={pacienteParaEditar}
+          onSalvar={salvarEdicao}
+        />
+      )}
     </div>
   );
 }
