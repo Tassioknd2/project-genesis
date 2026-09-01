@@ -138,7 +138,8 @@ export function RemarcarAgendamentoDialog({
     );
   }, [buscaPaciente]);
 
-  if (!appointment) return null;
+if (!appointment) return null;
+  const appt = appointment;
 
   function toggleTipo(t: TipoAtendimento) {
     setTipos((prev) => {
@@ -161,20 +162,20 @@ export function RemarcarAgendamentoDialog({
   function handleSalvar() {
     if (!hora || tipos.length === 0 || !pacienteSelecionado) return;
 
-    onConfirmarRemarcacao({
-      appointment,
+onConfirmarRemarcacao({
+      appointment: appt,
       novaData: data,
       novoHorario: hora,
       paciente: pacienteSelecionado,
       tipos,
       duracaoMin: duracaoTotal,
-      motivo: motivo.trim() || undefined,
+      ...(motivo.trim() ? { motivo: motivo.trim() } : {}),
     });
     onOpenChange(false);
   }
 
   function handleExecutarCancelamento() {
-    onCancelarAgendamento(appointment, motivo.trim() || "Cancelado pelo usuário ao remarcar");
+    onCancelarAgendamento(appt, motivo.trim() || "Cancelado pelo usuário ao remarcar");
     onOpenChange(false);
   }
 
@@ -407,13 +408,13 @@ export function RemarcarAgendamentoDialog({
             </div>
 
             <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {[...TIPOS_CONSULTA, ...TIPOS_EXAME].map((t) => {
-                const isSelected = tipos.includes(t.tipo);
+{[...TIPOS_CONSULTA, ...TIPOS_EXAME].map((t) => {
+                const isSelected = tipos.includes(t);
                 return (
                   <button
-                    key={t.tipo}
+                    key={t}
                     type="button"
-                    onClick={() => toggleTipo(t.tipo)}
+                    onClick={() => toggleTipo(t)}
                     className={cn(
                       "flex items-center justify-between rounded-xl border px-2.5 py-2 text-left text-xs transition-all active:scale-95",
                       isSelected
@@ -421,14 +422,14 @@ export function RemarcarAgendamentoDialog({
                         : "border-line2 bg-card text-ink hover:border-amber/40",
                     )}
                   >
-                    <span className="truncate">{t.tipo}</span>
+                    <span className="truncate">{t}</span>
                     <span
                       className={cn(
                         "ml-1 font-mono text-[9px] shrink-0",
                         isSelected ? "text-cream/70" : "text-inksoft",
                       )}
                     >
-                      {t.duracao}m
+                      {duracaoDe(t)}m
                     </span>
                   </button>
                 );

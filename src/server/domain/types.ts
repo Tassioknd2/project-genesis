@@ -52,8 +52,8 @@ export interface Appointment {
   tipos?: TipoAtendimento[];
   medico: string;
   status: AppointmentStatus;
-  pendencia?: PendenciaType;
-  observacoes?: string;
+pendencia?: PendenciaType | undefined;
+  observacoes?: string | undefined;
   notas?: string[];
   etiquetas?: Etiqueta[];
   criadoEm: string;

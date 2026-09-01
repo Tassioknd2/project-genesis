@@ -44,7 +44,7 @@ interface EditarRegistroDialogProps {
 const inputCls =
   "h-10 w-full rounded-xl border border-line2 bg-card px-3 text-sm font-medium text-ink shadow-sm transition-all placeholder:text-inksoft/40 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20";
 
-const labelCls罕 = "mb-1 block font-mono text-[10px] uppercase tracking-widest text-inksoft";
+
 
 export function EditarRegistroDialog({
   open,
@@ -106,14 +106,15 @@ export function EditarRegistroDialog({
       ? calcularIdade(dataNascimento, paciente.idade)
       : paciente.idade;
 
-    const atualizado: Patient = {
+const atualizado: Patient = {
       ...paciente,
       nome: nome.trim(),
       idade: finalIdade,
-      dataNascimento: dataNascimento.trim() || undefined,
       telefone: telefone.trim(),
       convenio: convenio.trim() || paciente.convenio,
     };
+    if (dataNascimento.trim()) atualizado.dataNascimento = dataNascimento.trim();
+    else delete atualizado.dataNascimento;
     if (observacoes.trim()) atualizado.observacoes = observacoes.trim();
     else delete atualizado.observacoes;
 

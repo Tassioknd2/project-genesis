@@ -17,6 +17,19 @@ import { analyticsService } from "../services/analytics.service";
 import { auditLogRepository } from "../repositories/audit-log.repository";
 import { Etiqueta, Patient } from "../domain/types";
 
+/**
+ * Remove propriedades cujo valor seja `undefined` — compatível com
+ * `exactOptionalPropertyTypes`, que rejeita `undefined` explícito em
+ * propriedades opcionais.
+ */
+function semUndefined<T extends object>(obj: T) {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out as { [K in keyof T]: Exclude<T[K], undefined> };
+}
+
 export async function handleApiRequest(request: Request): Promise<Response | null> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -41,8 +54,8 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
     // 2. Agenda
     if (path === "/api/agenda" && method === "GET") {
       const queryParams = Object.fromEntries(url.searchParams.entries());
-      const validatedQuery = GetAgendaQuerySchema.parse(queryParams);
-      const result = await agendaService.getAgenda(validatedQuery);
+const validatedQuery = GetAgendaQuerySchema.parse(queryParams);
+      const result = await agendaService.getAgenda(semUndefined(validatedQuery));
       return jsonResponse(result);
     }
 
@@ -112,9 +125,9 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
 
     // 4. Patients
     if (path === "/api/patients" && method === "GET") {
-      const search = url.searchParams.get("search") || undefined;
+const search = url.searchParams.get("search") || undefined;
       const convenio = url.searchParams.get("convenio") || undefined;
-      const patients = await patientService.list({ search, convenio });
+      const patients = await patientService.list(semUndefined({ search, convenio }));
       return jsonResponse(patients);
     }
 

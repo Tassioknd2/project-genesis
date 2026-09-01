@@ -197,13 +197,15 @@ export function NovoAgendamentoWizard({
   const pacienteFinal: Patient | null =
     modo === "novo"
       ? novoNome.trim()
-        ? {
+? {
             id: `p${Date.now()}`,
             nome: novoNome.trim(),
             idade: novoDataNascimento ? calcularIdade(novoDataNascimento) : 0,
-            dataNascimento: novoDataNascimento.trim() || undefined,
             telefone: novoTelefone.trim() || "—",
             convenio: novoConvenio.trim() || "Particular",
+            ...(novoDataNascimento.trim()
+              ? { dataNascimento: novoDataNascimento.trim() }
+              : {}),
           }
         : null
       : pacienteSelecionado;

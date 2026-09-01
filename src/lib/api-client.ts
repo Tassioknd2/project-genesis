@@ -40,8 +40,8 @@ class ApiClient {
 
     if (!response.ok || !json.success) {
       const errorMsg = json.error?.message || `Erro na requisição HTTP ${response.status}`;
-      const err = new Error(errorMsg) as Error & { code?: string; details?: unknown };
-      err.code = json.error?.code;
+const err = new Error(errorMsg) as Error & { code?: string; details?: unknown };
+      if (json.error?.code !== undefined) err.code = json.error.code;
       err.details = json.error?.details;
       throw err;
     }
