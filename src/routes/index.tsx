@@ -22,6 +22,10 @@ import {
   type NovoAgendamentoDraft,
 } from "@/components/NovoAgendamentoWizard";
 import {
+  RemarcarAgendamentoDialog,
+  type RemarcacaoResultado,
+} from "@/components/RemarcarAgendamentoDialog";
+import {
   HOJE_ISO,
   MEDICO,
   categoriaDe,
@@ -74,6 +78,7 @@ const filtrosPrincipais: { id: Filtro; rotulo: string }[] = [
 function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
+  const [removidos, setRemovidos] = useState<Record<string, string[]>>({});
   const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
   const [notas, setNotas] = useState<Record<string, string[]>>({});
   const [etiquetas, setEtiquetas] = useState<Record<string, Etiqueta[]>>({});
@@ -81,6 +86,7 @@ function AgendaPage() {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
   const [editando, setEditando] = useState<Appointment | null>(null);
+  const [remarcando, setRemarcando] = useState<Appointment | null>(null);
   const [wizardAberto, setWizardAberto] = useState(false);
 
   const isoSelecionado = toISODate(dataSelecionada);
@@ -91,12 +97,13 @@ function AgendaPage() {
     if (toISODate(hoje) !== HOJE_ISO) setDataSelecionada(hoje);
   }, []);
 
-  // Agenda do dia = base fictícia + criados na sessão + alterações de status,
+  // Agenda do dia = base fictícia + criados na sessão - remarcados para outro dia + alterações,
   // sempre ordenada por horário.
   const agenda = useMemo(() => {
     const base = [...getAgendaPorData(isoSelecionado), ...(extras[isoSelecionado] ?? [])];
-    return ordenarPorHorario(base.map((a) => alteracoes[a.id] ?? a));
-  }, [isoSelecionado, extras, alteracoes]);
+    const filtrados = base.filter((a) => !(removidos[isoSelecionado] ?? []).includes(a.id));
+    return ordenarPorHorario(filtrados.map((a) => alteracoes[a.id] ?? a));
+  }, [isoSelecionado, extras, alteracoes, removidos]);
 
   useEffect(() => {
     setFiltro("todos");
@@ -150,6 +157,11 @@ function AgendaPage() {
   );
 
   function handleAction(appointment: Appointment, action: Action) {
+    if (action.status === "remarcado" || action.label.toLowerCase().includes("remarcar")) {
+      setRemarcando(appointment);
+      return;
+    }
+
     if (action.status) {
       setAlteracoes((atual) => ({
         ...atual,
@@ -167,6 +179,110 @@ function AgendaPage() {
         description: "Esta ação exige confirmação humana (disponível na versão conectada).",
       });
     }
+  }
+
+  function handleRemarcarConfirmado(resultado: RemarcacaoResultado) {
+    const {
+      appointment,
+      novaData,
+      novoHorario,
+      paciente: pac,
+      tipos,
+      duracaoMin,
+      motivo,
+    } = resultado;
+    const isoDestino = toISODate(novaData);
+    const primaryTipo = tipos[0] || appointment.tipo;
+
+    // Atualizar paciente cadastrado se necessário
+    const idxPaciente = pacientes.findIndex((p) => p.id === pac.id);
+    if (idxPaciente >= 0) pacientes[idxPaciente] = pac;
+    else pacientes.push(pac);
+
+    const atualizado: Appointment = {
+      ...appointment,
+      hora: novoHorario,
+      paciente: pac,
+      tipo: primaryTipo,
+      tipos,
+      duracaoMin,
+      status: "agendado",
+      pendencia: undefined,
+    };
+
+    if (motivo) {
+      const timestamp = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const notaTexto = `[Remarcação às ${timestamp}]: ${motivo} (Transferido para ${novaData.toLocaleDateString("pt-BR")} às ${novoHorario})`;
+      setNotas((atual) => ({
+        ...atual,
+        [atualizado.id]: [...(atual[atualizado.id] ?? []), notaTexto],
+      }));
+    }
+
+    if (isoDestino === isoSelecionado) {
+      // Mesmo dia: atualiza horário e procedimentos
+      setAlteracoes((atual) => ({
+        ...atual,
+        [atualizado.id]: atualizado,
+      }));
+    } else {
+      // Dia diferente: remove da data atual e insere na nova data
+      setRemovidos((prev) => ({
+        ...prev,
+        [isoSelecionado]: [...(prev[isoSelecionado] ?? []), appointment.id],
+      }));
+
+      setExtras((prev) => ({
+        ...prev,
+        [isoDestino]: [
+          ...(prev[isoDestino] ?? []).filter((a) => a.id !== atualizado.id),
+          atualizado,
+        ],
+      }));
+
+      setAlteracoes((prev) => {
+        const next = { ...prev };
+        delete next[appointment.id];
+        return next;
+      });
+    }
+
+    const rotuloTipos = formatarTipos(tipos, primaryTipo);
+    toast.success(`Agendamento remarcado com sucesso!`, {
+      description: `${pac.nome.split(" ")[0]} · ${rotuloTipos} · ${novaData.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })} às ${novoHorario}`,
+    });
+  }
+
+  function handleCancelarAgendamento(appointment: Appointment, motivo?: string) {
+    setAlteracoes((atual) => ({
+      ...atual,
+      [appointment.id]: {
+        ...appointment,
+        status: "recusado",
+        pendencia: "recusado",
+      },
+    }));
+
+    if (motivo) {
+      const timestamp = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setNotas((atual) => ({
+        ...atual,
+        [appointment.id]: [
+          ...(atual[appointment.id] ?? []),
+          `[Cancelado às ${timestamp}]: ${motivo}`,
+        ],
+      }));
+    }
+
+    toast.error(`Agendamento cancelado — ${appointment.paciente.nome.split(" ")[0]}`, {
+      description: motivo || "Horário liberado na agenda do dia.",
+    });
   }
 
   function handleNovoAgendamento(draft: NovoAgendamentoDraft) {
@@ -380,14 +496,9 @@ function AgendaPage() {
           {/* Pendências */}
           <button
             type="button"
-            onClick={() => setFiltro(filtro === "aguardando" ? "todos" : "aguardando")}
+            onClick={() => setFiltro("todos")}
             title={`${recusados} recusado(s) · ${semResposta} sem resposta · ${falhas} falha(s) de envio`}
-            className={cn(
-              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
-              filtro === "aguardando"
-                ? "border-amber bg-amber/10 ring-1 ring-amber shadow-2xs"
-                : "border-amber/40 bg-amber/5 hover:border-amber hover:shadow-2xs",
-            )}
+            className="card-rise flex items-center gap-3 rounded-2xl border border-amber/40 bg-amber/5 p-4 text-left shadow-2xs transition-all duration-200 hover:border-amber active:scale-[0.98]"
             style={{ animationDelay: "250ms" }}
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber/15 text-amberdeep">
@@ -536,6 +647,7 @@ function AgendaPage() {
               onAddEtiqueta={(texto, cor) => addEtiqueta(appointment.id, texto, cor)}
               onRemoveEtiqueta={(idEtiqueta) => removeEtiqueta(appointment.id, idEtiqueta)}
               onEditar={() => setEditando(appointment)}
+              onRemarcar={(app) => setRemarcando(app)}
             />
           ))}
 
@@ -579,6 +691,17 @@ function AgendaPage() {
             paciente={editando.paciente}
             appointment={editando}
             onSalvar={(resultado) => salvarEdicao(editando, resultado)}
+          />
+        )}
+
+        {remarcando && (
+          <RemarcarAgendamentoDialog
+            open={!!remarcando}
+            onOpenChange={(aberto) => !aberto && setRemarcando(null)}
+            appointment={remarcando}
+            dataAtual={dataSelecionada}
+            onConfirmarRemarcacao={handleRemarcarConfirmado}
+            onCancelarAgendamento={handleCancelarAgendamento}
           />
         )}
 

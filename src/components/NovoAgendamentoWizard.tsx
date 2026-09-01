@@ -25,11 +25,13 @@ import { cn } from "@/lib/utils";
 import {
   HOJE_ISO,
   MEDICO,
+  calcularIdade,
   duracaoDe,
   duracaoDosTipos,
   formatarTipos,
   fromISODate,
   pacientes,
+  toISODate,
   type Patient,
   type TipoAtendimento,
 } from "@/lib/agenda-data";
@@ -142,7 +144,7 @@ export function NovoAgendamentoWizard({
   const [busca, setBusca] = useState("");
   const [pacienteId, setPacienteId] = useState<string | null>(null);
   const [novoNome, setNovoNome] = useState("");
-  const [novoIdade, setNovoIdade] = useState("");
+  const [novoDataNascimento, setNovoDataNascimento] = useState("");
   const [novoTelefone, setNovoTelefone] = useState("");
   const [novoConvenio, setNovoConvenio] = useState("");
   const [tipos, setTipos] = useState<TipoAtendimento[]>([]);
@@ -158,7 +160,7 @@ export function NovoAgendamentoWizard({
     setBusca("");
     setPacienteId(pacienteInicial ? pacienteInicial.id : null);
     setNovoNome("");
-    setNovoIdade("");
+    setNovoDataNascimento("");
     setNovoTelefone("");
     setNovoConvenio("");
     setTipos([]);
@@ -175,6 +177,11 @@ export function NovoAgendamentoWizard({
   }
 
   const duracaoTotal = useMemo(() => duracaoDosTipos(tipos), [tipos]);
+
+  const idadeCalculada = useMemo(() => {
+    if (!novoDataNascimento) return null;
+    return calcularIdade(novoDataNascimento);
+  }, [novoDataNascimento]);
 
   const resultados = useMemo(() => {
     const q = busca.toLowerCase();
@@ -193,7 +200,8 @@ export function NovoAgendamentoWizard({
         ? {
             id: `p${Date.now()}`,
             nome: novoNome.trim(),
-            idade: Number(novoIdade) || 0,
+            idade: novoDataNascimento ? calcularIdade(novoDataNascimento) : 0,
+            dataNascimento: novoDataNascimento.trim() || undefined,
             telefone: novoTelefone.trim() || "—",
             convenio: novoConvenio.trim() || "Particular",
           }
@@ -400,16 +408,21 @@ export function NovoAgendamentoWizard({
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-widest text-inksoft">
-                      Idade
-                    </span>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <span className="block font-mono text-[10px] font-bold uppercase tracking-widest text-inksoft">
+                        Data de nascimento
+                      </span>
+                      {idadeCalculada !== null && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amberdeep">
+                          {idadeCalculada} {idadeCalculada === 1 ? "ano" : "anos"}
+                        </span>
+                      )}
+                    </div>
                     <input
-                      type="number"
-                      min={0}
-                      max={120}
-                      value={novoIdade}
-                      onChange={(e) => setNovoIdade(e.target.value)}
-                      placeholder="Ex.: 58"
+                      type="date"
+                      max={HOJE_ISO}
+                      value={novoDataNascimento}
+                      onChange={(e) => setNovoDataNascimento(e.target.value)}
                       className={inputCls}
                     />
                   </label>
@@ -684,7 +697,14 @@ export function NovoAgendamentoWizard({
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-2.5 p-4 sm:grid-cols-2">
-                  <Linha rotulo="Paciente" valor={pacienteFinal.nome} />
+                  <Linha
+                    rotulo="Paciente"
+                    valor={
+                      pacienteFinal.idade > 0
+                        ? `${pacienteFinal.nome} (${pacienteFinal.idade} anos)`
+                        : pacienteFinal.nome
+                    }
+                  />
                   <Linha rotulo="WhatsApp / Telefone" valor={pacienteFinal.telefone} />
                   <div className="rounded-xl border border-line/60 bg-paper/40 p-2.5 sm:col-span-2">
                     <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-inksoft">

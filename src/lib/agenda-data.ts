@@ -23,10 +23,54 @@ export interface Patient {
   id: string;
   nome: string;
   idade: number;
+  dataNascimento?: string;
   telefone: string;
   convenio: string; // "Particular" quando particular
   ultimaVisita?: string;
   observacoes?: string;
+}
+
+export function calcularIdade(
+  dataNascimento: string | Date | undefined,
+  fallbackIdade?: number,
+): number {
+  if (!dataNascimento) return fallbackIdade ?? 0;
+  let d: Date;
+  if (dataNascimento instanceof Date) {
+    d = dataNascimento;
+  } else if (typeof dataNascimento === "string") {
+    if (dataNascimento.includes("-")) {
+      const parts = dataNascimento.split("-").map(Number);
+      if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+        // YYYY-MM-DD
+        d = new Date(parts[0], parts[1] - 1, parts[2]);
+      } else {
+        d = new Date(dataNascimento);
+      }
+    } else if (dataNascimento.includes("/")) {
+      const parts = dataNascimento.split("/").map(Number);
+      if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+        // DD/MM/YYYY
+        d = new Date(parts[2], parts[1] - 1, parts[0]);
+      } else {
+        d = new Date(dataNascimento);
+      }
+    } else {
+      d = new Date(dataNascimento);
+    }
+  } else {
+    return fallbackIdade ?? 0;
+  }
+
+  if (isNaN(d.getTime())) return fallbackIdade ?? 0;
+
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - d.getFullYear();
+  const m = hoje.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) {
+    anos--;
+  }
+  return Math.max(0, anos);
 }
 
 export interface Appointment {
@@ -47,13 +91,17 @@ export const MEDICO = "Dr. Carlos Mendes";
 
 export type CategoriaAtendimento = "exame" | "consulta";
 
-const tiposExame: TipoAtendimento[] = [
+export const TIPOS_CONSULTA: TipoAtendimento[] = ["Consulta", "Retorno"];
+
+export const TIPOS_EXAME: TipoAtendimento[] = [
   "Eletrocardiograma",
   "Ecocardiograma",
   "Teste ergométrico",
   "Holter 24h",
   "MAPA",
 ];
+
+const tiposExame = TIPOS_EXAME;
 
 export function categoriaDe(tipo: TipoAtendimento): CategoriaAtendimento {
   return tiposExame.includes(tipo) ? "exame" : "consulta";
@@ -94,6 +142,7 @@ export const pacientes: Patient[] = [
     id: "p1",
     nome: "Marta Nogueira",
     idade: 62,
+    dataNascimento: "1964-04-12",
     telefone: "(11) 98812-4450",
     convenio: "Unimed",
     ultimaVisita: "03/01/2026",
@@ -103,6 +152,7 @@ export const pacientes: Patient[] = [
     id: "p2",
     nome: "Roberto Lima",
     idade: 58,
+    dataNascimento: "1968-08-25",
     telefone: "(11) 97123-8801",
     convenio: "Particular",
     ultimaVisita: "18/12/2025",
@@ -111,6 +161,7 @@ export const pacientes: Patient[] = [
     id: "p3",
     nome: "Cláudia Ferraz",
     idade: 71,
+    dataNascimento: "1955-02-14",
     telefone: "(11) 96540-2213",
     convenio: "SulAmérica",
     ultimaVisita: "22/12/2025",
@@ -120,6 +171,7 @@ export const pacientes: Patient[] = [
     id: "p4",
     nome: "Henrique Prado",
     idade: 66,
+    dataNascimento: "1960-06-30",
     telefone: "(11) 98777-5540",
     convenio: "Bradesco Saúde",
     ultimaVisita: "10/01/2026",
@@ -128,6 +180,7 @@ export const pacientes: Patient[] = [
     id: "p5",
     nome: "Solange Ribeiro",
     idade: 74,
+    dataNascimento: "1952-11-09",
     telefone: "(11) 99901-3345",
     convenio: "Porto Seguro",
     ultimaVisita: "05/01/2026",
@@ -136,6 +189,7 @@ export const pacientes: Patient[] = [
     id: "p6",
     nome: "Eduardo Sanches",
     idade: 59,
+    dataNascimento: "1967-03-18",
     telefone: "(11) 91234-7789",
     convenio: "Amil",
     ultimaVisita: "15/01/2026",
@@ -144,6 +198,7 @@ export const pacientes: Patient[] = [
     id: "p7",
     nome: "Tereza Campos",
     idade: 80,
+    dataNascimento: "1946-09-05",
     telefone: "(11) 98321-0012",
     convenio: "SulAmérica",
     ultimaVisita: "28/11/2025",
@@ -153,6 +208,7 @@ export const pacientes: Patient[] = [
     id: "p8",
     nome: "Fernando Alcântara",
     idade: 64,
+    dataNascimento: "1962-07-21",
     telefone: "(11) 97456-1188",
     convenio: "Particular",
     ultimaVisita: "09/01/2026",
@@ -161,6 +217,7 @@ export const pacientes: Patient[] = [
     id: "p9",
     nome: "Beatriz Hoffmann",
     idade: 53,
+    dataNascimento: "1973-10-15",
     telefone: "(11) 96610-9034",
     convenio: "Bradesco Saúde",
     ultimaVisita: "20/01/2026",
@@ -169,6 +226,7 @@ export const pacientes: Patient[] = [
     id: "p10",
     nome: "Amélia Corrêa",
     idade: 69,
+    dataNascimento: "1957-01-29",
     telefone: "(11) 98877-6621",
     convenio: "Amil",
     ultimaVisita: "12/01/2026",

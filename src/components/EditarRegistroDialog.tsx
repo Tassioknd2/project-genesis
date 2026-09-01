@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Pencil, Stethoscope } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
+  HOJE_ISO,
+  calcularIdade,
   duracaoDe,
   duracaoDosTipos,
   type Appointment,
@@ -52,7 +54,7 @@ export function EditarRegistroDialog({
   onSalvar,
 }: EditarRegistroDialogProps) {
   const [nome, setNome] = useState(paciente.nome);
-  const [idade, setIdade] = useState(String(paciente.idade));
+  const [dataNascimento, setDataNascimento] = useState(paciente.dataNascimento ?? "");
   const [telefone, setTelefone] = useState(paciente.telefone);
   const [convenio, setConvenio] = useState(paciente.convenio);
   const [observacoes, setObservacoes] = useState(paciente.observacoes ?? "");
@@ -67,7 +69,7 @@ export function EditarRegistroDialog({
   useEffect(() => {
     if (!open) return;
     setNome(paciente.nome);
-    setIdade(String(paciente.idade));
+    setDataNascimento(paciente.dataNascimento ?? "");
     setTelefone(paciente.telefone);
     setConvenio(paciente.convenio);
     setObservacoes(paciente.observacoes ?? "");
@@ -80,6 +82,11 @@ export function EditarRegistroDialog({
       setTipos(["Consulta"]);
     }
   }, [open, paciente, appointment]);
+
+  const idadeCalculada = useMemo(() => {
+    if (!dataNascimento) return paciente.idade || null;
+    return calcularIdade(dataNascimento, paciente.idade);
+  }, [dataNascimento, paciente.idade]);
 
   function toggleTipo(t: TipoAtendimento) {
     setTipos((prev) => {
@@ -95,10 +102,15 @@ export function EditarRegistroDialog({
 
   function salvar() {
     if (!nome.trim() || tipos.length === 0) return;
+    const finalIdade = dataNascimento
+      ? calcularIdade(dataNascimento, paciente.idade)
+      : paciente.idade;
+
     const atualizado: Patient = {
       ...paciente,
       nome: nome.trim(),
-      idade: Number(idade) || paciente.idade,
+      idade: finalIdade,
+      dataNascimento: dataNascimento.trim() || undefined,
       telefone: telefone.trim(),
       convenio: convenio.trim() || paciente.convenio,
     };
@@ -158,19 +170,26 @@ export function EditarRegistroDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                className="mb-1 block font-mono text-[10px] uppercase tracking-widest text-inksoft"
-                htmlFor="ed-idade"
-              >
-                Idade
-              </label>
+              <div className="mb-1 flex items-center justify-between">
+                <label
+                  className="block font-mono text-[10px] uppercase tracking-widest text-inksoft"
+                  htmlFor="ed-nascimento"
+                >
+                  Data de nascimento
+                </label>
+                {idadeCalculada !== null && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber/15 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amberdeep">
+                    {idadeCalculada} {idadeCalculada === 1 ? "ano" : "anos"}
+                  </span>
+                )}
+              </div>
               <input
-                id="ed-idade"
-                type="number"
-                min={0}
+                id="ed-nascimento"
+                type="date"
+                max={HOJE_ISO}
                 className={inputCls}
-                value={idade}
-                onChange={(e) => setIdade(e.target.value)}
+                value={dataNascimento}
+                onChange={(e) => setDataNascimento(e.target.value)}
               />
             </div>
             <div>

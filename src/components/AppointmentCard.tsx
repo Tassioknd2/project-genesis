@@ -31,7 +31,7 @@ import type {
   EtiquetaCor,
   TipoAtendimento,
 } from "@/lib/agenda-data";
-import { ETIQUETA_CORES, classeDaCor } from "@/lib/agenda-data";
+import { ETIQUETA_CORES, calcularIdade, classeDaCor } from "@/lib/agenda-data";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BotaoCaneta } from "@/components/BotaoCaneta";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -156,6 +156,7 @@ interface AppointmentCardProps {
   onAddEtiqueta?: (texto: string, cor: EtiquetaCor) => void;
   onRemoveEtiqueta?: (id: string) => void;
   onEditar?: () => void;
+  onRemarcar?: (appointment: Appointment) => void;
 }
 
 export function AppointmentCard({
@@ -169,6 +170,7 @@ export function AppointmentCard({
   onAddEtiqueta,
   onRemoveEtiqueta,
   onEditar,
+  onRemarcar,
 }: AppointmentCardProps) {
   const { paciente } = appointment;
   const particular = paciente.convenio.toLowerCase().includes("particular");
@@ -190,6 +192,7 @@ export function AppointmentCard({
   const selado = concluido && !envelopeAberto;
   const TipoIcon = getTipoIcon(appointment.tipo);
   const acoes = acoesPara(appointment.status);
+  const idadePaciente = calcularIdade(paciente.dataNascimento, paciente.idade);
 
   function salvarNota() {
     const texto = novaNota.trim();
@@ -398,7 +401,7 @@ export function AppointmentCard({
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-[16px] font-bold tracking-tight text-ink">{paciente.nome}</h3>
                 <span className="font-mono text-[11px] font-medium text-inksoft">
-                  {paciente.idade} anos
+                  {idadePaciente} {idadePaciente === 1 ? "ano" : "anos"}
                 </span>
                 <span
                   className={cn(
@@ -533,11 +536,20 @@ export function AppointmentCard({
               {acoes.map((action) => {
                 const Icon = action.icon;
                 const isPrimary = action.primary;
+                const isRemarcar =
+                  action.status === "remarcado" || action.label.toLowerCase().includes("remarcar");
+
                 return (
                   <button
                     key={action.label}
                     type="button"
-                    onClick={() => onAction(appointment, action)}
+                    onClick={() => {
+                      if (isRemarcar && onRemarcar) {
+                        onRemarcar(appointment);
+                      } else {
+                        onAction(appointment, action);
+                      }
+                    }}
                     className={cn(
                       "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all active:scale-95",
                       isPrimary &&

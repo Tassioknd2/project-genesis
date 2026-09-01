@@ -18,7 +18,7 @@ import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
 } from "@/components/NovoAgendamentoWizard";
-import { pacientes, type Patient } from "@/lib/agenda-data";
+import { calcularIdade, pacientes, type Patient } from "@/lib/agenda-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pacientes")({
@@ -228,6 +228,7 @@ function PacientesPage() {
         >
           {visiveis.map((p, i) => {
             const particular = p.convenio.toLowerCase().includes("particular");
+            const idadeCalculada = calcularIdade(p.dataNascimento, p.idade);
             const whatsappUrl = `https://wa.me/55${p.telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
               `Olá ${p.nome.split(" ")[0]}, estamos entrando em contato da Agenda Cardio para confirmar seu acompanhamento clínico.`,
             )}`;
@@ -248,7 +249,7 @@ function PacientesPage() {
                       <div>
                         <h3 className="text-sm font-bold tracking-tight text-ink">{p.nome}</h3>
                         <p className="font-mono text-[11px] text-inksoft">
-                          {p.idade} anos · {p.telefone}
+                          {idadeCalculada} {idadeCalculada === 1 ? "ano" : "anos"} · {p.telefone}
                         </p>
                       </div>
                     </div>
