@@ -163,7 +163,7 @@ if (!appointment) return null;
     if (!hora || tipos.length === 0 || !pacienteSelecionado) return;
 
 onConfirmarRemarcacao({
-      appt,
+      appointment: appt,
       novaData: data,
       novoHorario: hora,
       paciente: pacienteSelecionado,
