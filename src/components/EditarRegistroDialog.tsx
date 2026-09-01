@@ -44,7 +44,7 @@ interface EditarRegistroDialogProps {
 const inputCls =
   "h-10 w-full rounded-xl border border-line2 bg-card px-3 text-sm font-medium text-ink shadow-sm transition-all placeholder:text-inksoft/40 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20";
 
-const labelCls罕 = "mb-1 block font-mono text-[10px] uppercase tracking-widest text-inksoft";
+
 
 export function EditarRegistroDialog({
   open,
