@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
@@ -9,12 +9,18 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { HOJE_ISO, fromISODate, toISODate } from "@/lib/agenda-data";
+import {
+  HOJE_ISO,
+  fromISODate,
+  getAgendaPorData,
+  toISODate,
+  type Appointment,
+} from "@/lib/agenda-data";
+import { CalendarioPainel } from "@/components/CalendarioPainel";
+import { VisaoDoMesDialog } from "@/components/VisaoDoMesDialog";
 import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
@@ -24,7 +30,10 @@ interface AppHeaderProps {
   selectedDate?: Date;
   onSelectDate?: (date: Date) => void;
   onNovoAgendamento?: (draft: NovoAgendamentoDraft) => void;
+  /** Resolve a agenda de uma data (inclui alterações feitas na sessão). */
+  agendaDoDia?: (iso: string) => Appointment[];
 }
+
 
 const MESES = [
   "Janeiro",
