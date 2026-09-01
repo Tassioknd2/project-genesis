@@ -5,20 +5,27 @@ import {
   AlertTriangle,
   CalendarDays,
   CheckCircle2,
+  Clock,
   FlaskConical,
   MessageCircle,
+  Search,
   Stethoscope,
   UserX,
+  X,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppointmentCard, type Action } from "@/components/AppointmentCard";
 import { EditarRegistroDialog, type EdicaoResultado } from "@/components/EditarRegistroDialog";
 import { ScrollProgressHeart } from "@/components/ScrollProgressHeart";
-import type { NovoAgendamentoDraft } from "@/components/NovoAgendamentoWizard";
+import {
+  NovoAgendamentoWizard,
+  type NovoAgendamentoDraft,
+} from "@/components/NovoAgendamentoWizard";
 import {
   HOJE_ISO,
   MEDICO,
   categoriaDe,
+  formatarTipos,
   fromISODate,
   getAgendaPorData,
   ordenarPorHorario,
@@ -31,6 +38,7 @@ import {
   type Etiqueta,
   type EtiquetaCor,
 } from "@/lib/agenda-data";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,8 +52,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Agenda Cardio — Agenda do dia" },
       {
         property: "og:description",
-        content:
-          "Confirmações por WhatsApp, pendências e controle da agenda do dia da clínica.",
+        content: "Confirmações por WhatsApp, pendências e controle da agenda do dia da clínica.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -74,6 +81,7 @@ function AgendaPage() {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
   const [editando, setEditando] = useState<Appointment | null>(null);
+  const [wizardAberto, setWizardAberto] = useState(false);
 
   const isoSelecionado = toISODate(dataSelecionada);
 
@@ -94,27 +102,45 @@ function AgendaPage() {
     setFiltro("todos");
   }, [isoSelecionado]);
 
-
-  const confirmados = agenda.filter((a) => a.status === "confirmado" || a.status === "concluido").length;
+  const confirmados = agenda.filter(
+    (a) => a.status === "confirmado" || a.status === "concluido",
+  ).length;
   const recusados = agenda.filter((a) => a.pendencia === "recusado").length;
   const semResposta = agenda.filter((a) => a.pendencia === "sem_resposta").length;
   const falhas = agenda.filter((a) => a.pendencia === "falha_envio").length;
   const faltas = agenda.filter((a) => a.status === "falta").length;
   const total = agenda.length;
 
-  const totalExames = agenda.filter((a) => categoriaDe(a.tipo) === "exame").length;
-  const totalConsultas = agenda.filter((a) => categoriaDe(a.tipo) === "consulta").length;
+  const totalExames = agenda.filter((a) => {
+    if (a.tipos && a.tipos.length > 0) return a.tipos.some((t) => categoriaDe(t) === "exame");
+    return categoriaDe(a.tipo) === "exame";
+  }).length;
+  const totalConsultas = agenda.filter((a) => {
+    if (a.tipos && a.tipos.length > 0) return a.tipos.some((t) => categoriaDe(t) === "consulta");
+    return categoriaDe(a.tipo) === "consulta";
+  }).length;
+
+  const taxaConfirmacao = total > 0 ? Math.round((confirmados / total) * 100) : 0;
 
   const visiveis = useMemo(
     () =>
       agenda.filter((a) => {
-        if (categoria && categoriaDe(a.tipo) !== categoria) return false;
+        if (categoria) {
+          const matchCat =
+            a.tipos && a.tipos.length > 0
+              ? a.tipos.some((t) => categoriaDe(t) === categoria)
+              : categoriaDe(a.tipo) === categoria;
+          if (!matchCat) return false;
+        }
         if (filtro !== "todos" && a.status !== filtro) return false;
         if (busca) {
           const q = busca.toLowerCase();
+          const matchTipo =
+            a.tipo.toLowerCase().includes(q) ||
+            (a.tipos && a.tipos.some((t) => t.toLowerCase().includes(q)));
           return (
             a.paciente.nome.toLowerCase().includes(q) ||
-            a.tipo.toLowerCase().includes(q) ||
+            matchTipo ||
             a.paciente.convenio.toLowerCase().includes(q)
           );
         }
@@ -123,7 +149,7 @@ function AgendaPage() {
     [agenda, filtro, busca, categoria],
   );
 
-function handleAction(appointment: Appointment, action: Action) {
+  function handleAction(appointment: Appointment, action: Action) {
     if (action.status) {
       setAlteracoes((atual) => ({
         ...atual,
@@ -133,12 +159,9 @@ function handleAction(appointment: Appointment, action: Action) {
           pendencia: undefined,
         },
       }));
-      toast.success(
-        `${appointment.paciente.nome.split(" ")[0]} — ${action.label.toLowerCase()}`,
-        {
-          description: `Estado atualizado para "${statusInfo[action.status].rotulo}".`,
-        },
-      );
+      toast.success(`${appointment.paciente.nome.split(" ")[0]} — ${action.label.toLowerCase()}`, {
+        description: `Estado atualizado para "${statusInfo[action.status].rotulo}".`,
+      });
     } else {
       toast.info(`${action.label} — ${appointment.paciente.nome}`, {
         description: "Esta ação exige confirmação humana (disponível na versão conectada).",
@@ -147,7 +170,6 @@ function handleAction(appointment: Appointment, action: Action) {
   }
 
   function handleNovoAgendamento(draft: NovoAgendamentoDraft) {
-    // Registra paciente novo no cadastro (dados em memória).
     if (!pacientes.some((p) => p.id === draft.paciente.id)) {
       pacientes.push(draft.paciente);
     }
@@ -158,6 +180,7 @@ function handleAction(appointment: Appointment, action: Action) {
       duracaoMin: draft.duracaoMin,
       paciente: draft.paciente,
       tipo: draft.tipo,
+      tipos: draft.tipos,
       medico: MEDICO,
       status: "agendado",
     };
@@ -177,13 +200,14 @@ function handleAction(appointment: Appointment, action: Action) {
     setBusca("");
     setCategoria(null);
 
-    // Se o agendamento é para outra data, navega até ela.
     if (isoDraft !== isoSelecionado) {
       setDataSelecionada(draft.data);
     }
 
+    const rotuloTipos = formatarTipos(draft.tipos, draft.tipo);
+
     toast.success(`Agendamento criado — ${draft.paciente.nome.split(" ")[0]}`, {
-      description: `${draft.tipo} · ${draft.hora} · ${statusInfo.agendado.rotulo}`,
+      description: `${rotuloTipos} · ${draft.hora} · ${statusInfo.agendado.rotulo} (${draft.duracaoMin} min)`,
     });
   }
 
@@ -226,92 +250,129 @@ function handleAction(appointment: Appointment, action: Action) {
     }));
   }
 
-
-
   return (
     <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
-<AppHeader
+      <AppHeader
         selectedDate={dataSelecionada}
         onSelectDate={setDataSelecionada}
         onNovoAgendamento={handleNovoAgendamento}
       />
       <ScrollProgressHeart />
 
-      <main className="mx-auto max-w-[1200px] px-5 py-8 lg:px-8">
-        {/* Indicadores do dia — linha única */}
+      <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
+        {/* Banner do Dia Selecionado */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            <span className="size-2 rounded-full bg-amber" />
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-inksoft">
+              Atendimento do Dia
+            </span>
+          </div>
+          <h2 className="mt-1 text-2xl font-black capitalize tracking-tight text-ink sm:text-3xl">
+            {dataSelecionada.toLocaleDateString("pt-BR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </h2>
+        </div>
+
+        {/* Indicadores do dia — Linha interativa */}
         <section
           aria-label="Indicadores do dia"
           className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
         >
-          {/* Agendamentos */}
-          <div
-            className="card-rise flex items-center gap-3 rounded-2xl border border-line2/60 bg-card px-4 py-3 shadow-sm"
+          {/* Total Agendamentos */}
+          <button
+            type="button"
+            onClick={() => setFiltro("todos")}
+            className={cn(
+              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
+              filtro === "todos"
+                ? "border-ink bg-card ring-1 ring-ink shadow-2xs"
+                : "border-line2/70 bg-card hover:border-amber/40 shadow-2xs",
+            )}
             style={{ animationDelay: "50ms" }}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber/10 text-amberdeep">
-              <CalendarDays className="size-4.5" aria-hidden />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber/10 text-amberdeep">
+              <CalendarDays className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] uppercase tracking-widest text-inksoft/70">
-                Agendamentos
+              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-inksoft">
+                Total Dia
               </div>
-              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums">
+              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-ink">
                 {total}
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Confirmados */}
-          <div
-            className="card-rise flex items-center gap-3 rounded-2xl border border-line2/60 bg-card px-4 py-3 shadow-sm"
+          <button
+            type="button"
+            onClick={() => setFiltro(filtro === "confirmado" ? "todos" : "confirmado")}
+            className={cn(
+              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
+              filtro === "confirmado"
+                ? "border-ok bg-ok/5 ring-1 ring-ok shadow-2xs"
+                : "border-line2/70 bg-card hover:border-ok/40 shadow-2xs",
+            )}
             style={{ animationDelay: "100ms" }}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ok/10 text-ok">
-              <CheckCircle2 className="size-4.5" aria-hidden />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ok/10 text-ok">
+              <CheckCircle2 className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] uppercase tracking-widest text-inksoft/70">
+              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-ok">
                 Confirmados
               </div>
-              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums">
+              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-ok">
                 {confirmados}
-                <span className="ml-1 text-xs font-medium text-inksoft">/ {total}</span>
+                <span className="ml-1 text-xs font-semibold text-inksoft">/ {total}</span>
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Faltas */}
-          <div
-            className="card-rise flex items-center gap-3 rounded-2xl border border-line2/60 bg-card px-4 py-3 shadow-sm"
+          <button
+            type="button"
+            onClick={() => setFiltro(filtro === "falta" ? "todos" : "falta")}
+            className={cn(
+              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
+              filtro === "falta"
+                ? "border-bad bg-bad/5 ring-1 ring-bad shadow-2xs"
+                : "border-line2/70 bg-card hover:border-bad/40 shadow-2xs",
+            )}
             style={{ animationDelay: "150ms" }}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-bad/10 text-bad">
-              <UserX className="size-4.5" aria-hidden />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-bad/10 text-bad">
+              <UserX className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] uppercase tracking-widest text-inksoft/70">
+              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-bad">
                 Faltas
               </div>
-              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums text-bad">
+              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-bad">
                 {faltas}
               </div>
             </div>
-          </div>
+          </button>
 
-          {/* Entregas WhatsApp */}
+          {/* Taxa de Confirmação WhatsApp */}
           <div
-            className="card-rise flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-paper shadow-md"
+            className="card-rise flex items-center gap-3 rounded-2xl bg-ink p-4 text-paper shadow-xs"
             style={{ animationDelay: "200ms" }}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-paper/10 text-amber">
-              <MessageCircle className="size-4.5" aria-hidden />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-paper/10 text-amber">
+              <MessageCircle className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] uppercase tracking-widest opacity-60">
-                WhatsApp
+              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest opacity-70">
+                Confirmação
               </div>
-              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums">
-                90<span className="ml-0.5 text-xs opacity-60">%</span>
+              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums">
+                {taxaConfirmacao}
+                <span className="ml-0.5 text-xs opacity-70">%</span>
               </div>
             </div>
           </div>
@@ -319,19 +380,24 @@ function handleAction(appointment: Appointment, action: Action) {
           {/* Pendências */}
           <button
             type="button"
-            onClick={() => setFiltro("aguardando")}
-            title={`${recusados} recusado(s) · ${semResposta} sem resposta · ${falhas} falha(s) de envio — clique para ver os que aguardam`}
-            className="card-rise flex items-center gap-3 rounded-2xl border border-amber/40 bg-cream px-4 py-3 text-left shadow-sm transition-all duration-200 hover:border-amber hover:shadow-md active:scale-[0.97]"
+            onClick={() => setFiltro(filtro === "aguardando" ? "todos" : "aguardando")}
+            title={`${recusados} recusado(s) · ${semResposta} sem resposta · ${falhas} falha(s) de envio`}
+            className={cn(
+              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
+              filtro === "aguardando"
+                ? "border-amber bg-amber/10 ring-1 ring-amber shadow-2xs"
+                : "border-amber/40 bg-amber/5 hover:border-amber hover:shadow-2xs",
+            )}
             style={{ animationDelay: "250ms" }}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber/15 text-amberdeep">
-              <AlertTriangle className="size-4.5" aria-hidden />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber/15 text-amberdeep">
+              <AlertTriangle className="size-5" aria-hidden />
             </span>
             <div className="min-w-0">
               <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-amberdeep">
                 Pendências
               </div>
-              <div className="text-xl font-bold leading-tight tracking-tighter tabular-nums text-amberdeep">
+              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-amberdeep">
                 {recusados + semResposta + falhas}
               </div>
             </div>
@@ -345,28 +411,36 @@ function handleAction(appointment: Appointment, action: Action) {
           aria-label="Busca e filtros"
         >
           <div className="relative flex-1">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-sm italic text-inksoft/40">
-              {"\n"}
-            </span>
+            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-inksoft/60" />
             <input
               type="search"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Paciente, tipo de atendimento ou convênio..."
-              className="h-14 w-full rounded-2xl border border-line2 bg-card pl-16 pr-6 text-sm font-medium shadow-sm transition-all placeholder:text-inksoft/40 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20"
+              placeholder="Buscar por paciente, tipo de atendimento ou convênio..."
+              className="h-12 w-full rounded-2xl border border-line2 bg-card pl-11 pr-10 text-xs font-medium text-ink shadow-2xs transition-all placeholder:text-inksoft/50 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20"
             />
+            {busca && (
+              <button
+                type="button"
+                aria-label="Limpar busca"
+                onClick={() => setBusca("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-inksoft/60 hover:text-ink"
+              >
+                <X className="size-4" />
+              </button>
+            )}
           </div>
+
           <div className="flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-line2 bg-card p-1.5">
             {filtrosPrincipais.map((f) => (
               <button
                 key={f.id}
                 type="button"
                 onClick={() => setFiltro(f.id)}
-                className={
-                  filtro === f.id
-                    ? "h-full whitespace-nowrap rounded-xl bg-ink px-4 text-[11px] font-bold uppercase tracking-wider text-cream"
-                    : "h-full whitespace-nowrap rounded-xl px-4 text-[11px] font-bold uppercase tracking-wider text-inksoft transition-colors hover:bg-line/20"
-                }
+                className={cn(
+                  "h-9 whitespace-nowrap rounded-xl px-3.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-all",
+                  filtro === f.id ? "bg-ink text-cream shadow-2xs" : "text-inksoft hover:bg-paper",
+                )}
               >
                 {f.rotulo}
               </button>
@@ -380,7 +454,7 @@ function handleAction(appointment: Appointment, action: Action) {
           className="card-rise mb-6"
           style={{ animationDelay: "320ms" }}
         >
-<div
+          <div
             role="group"
             aria-label="Categoria"
             className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2"
@@ -389,61 +463,66 @@ function handleAction(appointment: Appointment, action: Action) {
               type="button"
               aria-pressed={categoria === "exame"}
               onClick={() => setCategoria((c) => (c === "exame" ? null : "exame"))}
-              className={`flex items-center justify-center gap-3 rounded-2xl border px-4 py-4 shadow-sm transition-all duration-200 active:scale-[0.97] ${
+              className={cn(
+                "flex items-center justify-center gap-3 rounded-2xl border p-3.5 shadow-2xs transition-all duration-200 active:scale-[0.98]",
                 categoria === "exame"
-                  ? "border-ink bg-ink text-cream shadow-md"
-                  : "border-line2 bg-card text-ink hover:border-amberdeep/40 hover:bg-amber/5"
-              }`}
+                  ? "border-ink bg-ink text-cream shadow-xs"
+                  : "border-line2 bg-card text-ink hover:border-amber/40 hover:bg-amber/5",
+              )}
             >
               <FlaskConical
-                className={`size-5 shrink-0 transition-colors ${
-                  categoria === "exame" ? "text-amber" : "text-amberdeep"
-                }`}
+                className={cn(
+                  "size-4.5 shrink-0 transition-colors",
+                  categoria === "exame" ? "text-amber" : "text-amberdeep",
+                )}
                 aria-hidden
               />
-              <span className="text-sm font-extrabold uppercase tracking-widest">Exames</span>
+              <span className="font-mono text-xs font-black uppercase tracking-wider">Exames</span>
               <span
-                className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors ${
-                  categoria === "exame"
-                    ? "bg-amber/20 text-amber"
-                    : "bg-amber/10 text-amberdeep"
-                }`}
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors",
+                  categoria === "exame" ? "bg-amber/20 text-amber" : "bg-amber/10 text-amberdeep",
+                )}
               >
-                {totalExames} agendado{totalExames === 1 ? "" : "s"}
+                {totalExames} {totalExames === 1 ? "agendado" : "agendados"}
               </span>
             </button>
+
             <button
               type="button"
               aria-pressed={categoria === "consulta"}
               onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
-              className={`flex items-center justify-center gap-3 rounded-2xl border px-4 py-4 shadow-sm transition-all duration-200 active:scale-[0.97] ${
+              className={cn(
+                "flex items-center justify-center gap-3 rounded-2xl border p-3.5 shadow-2xs transition-all duration-200 active:scale-[0.98]",
                 categoria === "consulta"
-                  ? "border-ink bg-ink text-cream shadow-md"
-                  : "border-line2 bg-card text-ink hover:border-amberdeep/40 hover:bg-amber/5"
-              }`}
+                  ? "border-ink bg-ink text-cream shadow-xs"
+                  : "border-line2 bg-card text-ink hover:border-amber/40 hover:bg-amber/5",
+              )}
             >
               <Stethoscope
-                className={`size-5 shrink-0 transition-colors ${
-                  categoria === "consulta" ? "text-amber" : "text-inksoft"
-                }`}
+                className={cn(
+                  "size-4.5 shrink-0 transition-colors",
+                  categoria === "consulta" ? "text-amber" : "text-inksoft",
+                )}
                 aria-hidden
               />
-              <span className="text-sm font-extrabold uppercase tracking-widest">Consultas</span>
+              <span className="font-mono text-xs font-black uppercase tracking-wider">
+                Consultas
+              </span>
               <span
-                className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors ${
-                  categoria === "consulta"
-                    ? "bg-amber/20 text-amber"
-                    : "bg-mutbg text-inksoft"
-                }`}
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors",
+                  categoria === "consulta" ? "bg-amber/20 text-amber" : "bg-mutbg text-inksoft",
+                )}
               >
-                {totalConsultas} agendado{totalConsultas === 1 ? "" : "s"}
+                {totalConsultas} {totalConsultas === 1 ? "agendada" : "agendadas"}
               </span>
             </button>
           </div>
         </section>
 
         {/* Lista de agendamentos */}
-        <section aria-label="Agenda do dia" className="space-y-3">
+        <section aria-label="Agenda do dia" className="space-y-3.5">
           {visiveis.map((appointment, i) => (
             <AppointmentCard
               key={appointment.id}
@@ -459,22 +538,36 @@ function handleAction(appointment: Appointment, action: Action) {
               onEditar={() => setEditando(appointment)}
             />
           ))}
+
           {visiveis.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-line2 bg-card p-12 text-center">
-              <p className="text-sm font-semibold text-inksoft">
-                Nenhum agendamento para esse dia ou filtro.
+            <div className="rounded-2xl border border-dashed border-line2 bg-card p-12 text-center shadow-2xs">
+              <Clock className="mx-auto mb-2 size-8 text-inksoft/40" />
+              <p className="text-sm font-bold text-ink">
+                Nenhum agendamento encontrado para os filtros selecionados.
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setFiltro("todos");
-                  setBusca("");
-                  setCategoria(null);
-                }}
-                className="mt-3 text-xs font-bold uppercase tracking-wider text-amber hover:text-amberdeep"
-              >
-                Limpar filtros
-              </button>
+              <p className="mt-1 text-xs text-inksoft">
+                Tente limpar os termos de busca ou selecionar outra data no cabeçalho.
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltro("todos");
+                    setBusca("");
+                    setCategoria(null);
+                  }}
+                  className="rounded-xl border border-line2 bg-paper px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:border-ink/40"
+                >
+                  Limpar filtros
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWizardAberto(true)}
+                  className="rounded-xl bg-ink px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-cream shadow-2xs transition-all hover:bg-ink/90"
+                >
+                  Criar Agendamento
+                </button>
+              </div>
             </div>
           )}
         </section>
@@ -489,12 +582,19 @@ function handleAction(appointment: Appointment, action: Action) {
           />
         )}
 
-        <footer className="mt-12 flex items-center justify-between border-t border-line2/30 py-8 opacity-60">
-          <span className="font-mono text-[10px] uppercase tracking-widest">
-            Dados fictícios · sem conexão com banco
+        <NovoAgendamentoWizard
+          open={wizardAberto}
+          onOpenChange={setWizardAberto}
+          dataInicial={dataSelecionada}
+          onSalvar={handleNovoAgendamento}
+        />
+
+        <footer className="mt-12 flex items-center justify-between border-t border-line2/40 py-8">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
+            Clínica de Cardiologia · Dr. Carlos Mendes (CRM 123.456-SP)
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-widest">
-            Agenda Cardio MVP v1.0
+          <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft/70">
+            Agenda Cardio v2.0
           </span>
         </footer>
       </main>

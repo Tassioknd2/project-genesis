@@ -35,6 +35,7 @@ export interface Appointment {
   duracaoMin: number;
   paciente: Patient;
   tipo: TipoAtendimento;
+  tipos?: TipoAtendimento[];
   medico: string;
   status: AppointmentStatus;
   pendencia?: "recusado" | "sem_resposta" | "falha_envio" | "tardio" | undefined;
@@ -72,36 +73,207 @@ export function duracaoDe(tipo: TipoAtendimento): number {
   return DURACOES[tipo] ?? 30;
 }
 
+export function duracaoDosTipos(tipos?: TipoAtendimento[], tipoPadrao?: TipoAtendimento): number {
+  if (tipos && tipos.length > 0) {
+    return tipos.reduce((acc, t) => acc + (DURACOES[t] ?? 30), 0);
+  }
+  return tipoPadrao ? duracaoDe(tipoPadrao) : 30;
+}
+
+export function formatarTipos(tipos?: TipoAtendimento[], tipoPadrao?: TipoAtendimento): string {
+  if (tipos && tipos.length > 0) {
+    if (tipos.length === 1) return tipos[0]!;
+    if (tipos.length === 2) return `${tipos[0]} + ${tipos[1]}`;
+    return `${tipos.slice(0, -1).join(", ")} + ${tipos[tipos.length - 1]}`;
+  }
+  return tipoPadrao ?? "Consulta";
+}
+
 export const pacientes: Patient[] = [
-  { id: "p1", nome: "Marta Nogueira", idade: 62, telefone: "(11) 98812-4450", convenio: "Unimed", ultimaVisita: "03/01/2026", observacoes: "Hipertensa; traz último exame de sangue." },
-  { id: "p2", nome: "Roberto Lima", idade: 58, telefone: "(11) 97123-8801", convenio: "Particular", ultimaVisita: "18/12/2025" },
-  { id: "p3", nome: "Cláudia Ferraz", idade: 71, telefone: "(11) 96540-2213", convenio: "SulAmérica", ultimaVisita: "22/12/2025", observacoes: "Mobilidade reduzida; preferir sala térrea." },
-  { id: "p4", nome: "Henrique Prado", idade: 66, telefone: "(11) 98777-5540", convenio: "Bradesco Saúde", ultimaVisita: "10/01/2026" },
-  { id: "p5", nome: "Solange Ribeiro", idade: 74, telefone: "(11) 99901-3345", convenio: "Porto Seguro", ultimaVisita: "05/01/2026" },
-  { id: "p6", nome: "Eduardo Sanches", idade: 59, telefone: "(11) 91234-7789", convenio: "Amil", ultimaVisita: "15/01/2026" },
-  { id: "p7", nome: "Tereza Campos", idade: 80, telefone: "(11) 98321-0012", convenio: "SulAmérica", ultimaVisita: "28/11/2025", observacoes: "Acompanhada pela filha." },
-  { id: "p8", nome: "Fernando Alcântara", idade: 64, telefone: "(11) 97456-1188", convenio: "Particular", ultimaVisita: "09/01/2026" },
-  { id: "p9", nome: "Beatriz Hoffmann", idade: 53, telefone: "(11) 96610-9034", convenio: "Bradesco Saúde", ultimaVisita: "20/01/2026" },
-  { id: "p10", nome: "Amélia Corrêa", idade: 69, telefone: "(11) 98877-6621", convenio: "Amil", ultimaVisita: "12/01/2026" },
+  {
+    id: "p1",
+    nome: "Marta Nogueira",
+    idade: 62,
+    telefone: "(11) 98812-4450",
+    convenio: "Unimed",
+    ultimaVisita: "03/01/2026",
+    observacoes: "Hipertensa; traz último exame de sangue.",
+  },
+  {
+    id: "p2",
+    nome: "Roberto Lima",
+    idade: 58,
+    telefone: "(11) 97123-8801",
+    convenio: "Particular",
+    ultimaVisita: "18/12/2025",
+  },
+  {
+    id: "p3",
+    nome: "Cláudia Ferraz",
+    idade: 71,
+    telefone: "(11) 96540-2213",
+    convenio: "SulAmérica",
+    ultimaVisita: "22/12/2025",
+    observacoes: "Mobilidade reduzida; preferir sala térrea.",
+  },
+  {
+    id: "p4",
+    nome: "Henrique Prado",
+    idade: 66,
+    telefone: "(11) 98777-5540",
+    convenio: "Bradesco Saúde",
+    ultimaVisita: "10/01/2026",
+  },
+  {
+    id: "p5",
+    nome: "Solange Ribeiro",
+    idade: 74,
+    telefone: "(11) 99901-3345",
+    convenio: "Porto Seguro",
+    ultimaVisita: "05/01/2026",
+  },
+  {
+    id: "p6",
+    nome: "Eduardo Sanches",
+    idade: 59,
+    telefone: "(11) 91234-7789",
+    convenio: "Amil",
+    ultimaVisita: "15/01/2026",
+  },
+  {
+    id: "p7",
+    nome: "Tereza Campos",
+    idade: 80,
+    telefone: "(11) 98321-0012",
+    convenio: "SulAmérica",
+    ultimaVisita: "28/11/2025",
+    observacoes: "Acompanhada pela filha.",
+  },
+  {
+    id: "p8",
+    nome: "Fernando Alcântara",
+    idade: 64,
+    telefone: "(11) 97456-1188",
+    convenio: "Particular",
+    ultimaVisita: "09/01/2026",
+  },
+  {
+    id: "p9",
+    nome: "Beatriz Hoffmann",
+    idade: 53,
+    telefone: "(11) 96610-9034",
+    convenio: "Bradesco Saúde",
+    ultimaVisita: "20/01/2026",
+  },
+  {
+    id: "p10",
+    nome: "Amélia Corrêa",
+    idade: 69,
+    telefone: "(11) 98877-6621",
+    convenio: "Amil",
+    ultimaVisita: "12/01/2026",
+  },
 ];
 
 export const agendaDoDia: Appointment[] = [
-  { id: "a1", hora: "08:00", duracaoMin: 30, paciente: pacientes[0]!, tipo: "Eletrocardiograma", medico: MEDICO, status: "concluido" },
-  { id: "a2", hora: "08:30", duracaoMin: 45, paciente: pacientes[7]!, tipo: "Ecocardiograma", medico: MEDICO, status: "confirmado" },
-  { id: "a3", hora: "09:15", duracaoMin: 30, paciente: pacientes[8]!, tipo: "Consulta", medico: MEDICO, status: "confirmado" },
-  { id: "a4", hora: "09:45", duracaoMin: 30, paciente: pacientes[1]!, tipo: "Teste ergométrico", medico: MEDICO, status: "aguardando", pendencia: "sem_resposta" },
-  { id: "a5", hora: "10:30", duracaoMin: 50, paciente: pacientes[2]!, tipo: "Teste ergométrico", medico: MEDICO, status: "agendado" },
-  { id: "a6", hora: "11:00", duracaoMin: 30, paciente: pacientes[3]!, tipo: "Retorno", medico: MEDICO, status: "recusado", pendencia: "recusado" },
-  { id: "a7", hora: "13:30", duracaoMin: 40, paciente: pacientes[4]!, tipo: "Holter 24h", medico: MEDICO, status: "falha_envio", pendencia: "falha_envio" },
-  { id: "a8", hora: "14:30", duracaoMin: 30, paciente: pacientes[9]!, tipo: "MAPA", medico: MEDICO, status: "aguardando", pendencia: "sem_resposta" },
-  { id: "a9", hora: "15:00", duracaoMin: 30, paciente: pacientes[5]!, tipo: "Consulta", medico: MEDICO, status: "confirmado" },
-  { id: "a10", hora: "16:30", duracaoMin: 30, paciente: pacientes[6]!, tipo: "Consulta", medico: MEDICO, status: "falta" },
+  {
+    id: "a1",
+    hora: "08:00",
+    duracaoMin: 30,
+    paciente: pacientes[0]!,
+    tipo: "Eletrocardiograma",
+    medico: MEDICO,
+    status: "concluido",
+  },
+  {
+    id: "a2",
+    hora: "08:30",
+    duracaoMin: 45,
+    paciente: pacientes[7]!,
+    tipo: "Ecocardiograma",
+    medico: MEDICO,
+    status: "confirmado",
+  },
+  {
+    id: "a3",
+    hora: "09:15",
+    duracaoMin: 60,
+    paciente: pacientes[8]!,
+    tipo: "Consulta",
+    tipos: ["Consulta", "Eletrocardiograma"],
+    medico: MEDICO,
+    status: "confirmado",
+  },
+  {
+    id: "a4",
+    hora: "09:45",
+    duracaoMin: 30,
+    paciente: pacientes[1]!,
+    tipo: "Teste ergométrico",
+    medico: MEDICO,
+    status: "aguardando",
+    pendencia: "sem_resposta",
+  },
+  {
+    id: "a5",
+    hora: "10:30",
+    duracaoMin: 50,
+    paciente: pacientes[2]!,
+    tipo: "Teste ergométrico",
+    medico: MEDICO,
+    status: "agendado",
+  },
+  {
+    id: "a6",
+    hora: "11:00",
+    duracaoMin: 30,
+    paciente: pacientes[3]!,
+    tipo: "Retorno",
+    medico: MEDICO,
+    status: "recusado",
+    pendencia: "recusado",
+  },
+  {
+    id: "a7",
+    hora: "13:30",
+    duracaoMin: 40,
+    paciente: pacientes[4]!,
+    tipo: "Holter 24h",
+    medico: MEDICO,
+    status: "falha_envio",
+    pendencia: "falha_envio",
+  },
+  {
+    id: "a8",
+    hora: "14:30",
+    duracaoMin: 30,
+    paciente: pacientes[9]!,
+    tipo: "MAPA",
+    medico: MEDICO,
+    status: "aguardando",
+    pendencia: "sem_resposta",
+  },
+  {
+    id: "a9",
+    hora: "15:00",
+    duracaoMin: 30,
+    paciente: pacientes[5]!,
+    tipo: "Consulta",
+    medico: MEDICO,
+    status: "confirmado",
+  },
+  {
+    id: "a10",
+    hora: "16:30",
+    duracaoMin: 30,
+    paciente: pacientes[6]!,
+    tipo: "Consulta",
+    medico: MEDICO,
+    status: "falta",
+  },
 ];
 
-export const statusInfo: Record<
-  AppointmentStatus,
-  { rotulo: string; descricao: string }
-> = {
+export const statusInfo: Record<AppointmentStatus, { rotulo: string; descricao: string }> = {
   agendado: { rotulo: "Agendado", descricao: "Criado; confirmação ainda não enviada" },
   aguardando: { rotulo: "Aguardando", descricao: "Confirmação enviada, sem resposta" },
   confirmado: { rotulo: "Confirmado", descricao: "Paciente respondeu SIM" },
@@ -126,8 +298,8 @@ export function fromISODate(iso: string): Date {
   return new Date(y!, (m ?? 1) - 1, d ?? 1);
 }
 
-/** Data de hoje, sincronizada com o relógio da máquina do usuário. */
-export const HOJE_ISO = toISODate(new Date());
+/** Data de hoje (referência determinística para SSR e cliente). */
+export const HOJE_ISO = "2026-08-31";
 
 // --- Etiquetas (estilo Trello) ---
 
@@ -166,8 +338,20 @@ function hash(str: string): number {
   return Math.abs(h);
 }
 
-const statusFuturos: AppointmentStatus[] = ["agendado", "aguardando", "confirmado", "recusado", "falha_envio"];
-const statusPassados: AppointmentStatus[] = ["concluido", "concluido", "falta", "remarcado", "concluido"];
+const statusFuturos: AppointmentStatus[] = [
+  "agendado",
+  "aguardando",
+  "confirmado",
+  "recusado",
+  "falha_envio",
+];
+const statusPassados: AppointmentStatus[] = [
+  "concluido",
+  "concluido",
+  "falta",
+  "remarcado",
+  "concluido",
+];
 
 function pendenciaDe(status: AppointmentStatus): Appointment["pendencia"] {
   if (status === "recusado") return "recusado";

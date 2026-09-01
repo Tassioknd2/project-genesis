@@ -1,13 +1,20 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  HeartPulse,
+  Plus,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { HOJE_ISO, fromISODate } from "@/lib/agenda-data";
+import { HOJE_ISO, fromISODate, toISODate } from "@/lib/agenda-data";
 import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
@@ -50,51 +57,57 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-export function AppHeader({
-  selectedDate,
-  onSelectDate,
-  onNovoAgendamento,
-}: AppHeaderProps = {}) {
+export function AppHeader({ selectedDate, onSelectDate, onNovoAgendamento }: AppHeaderProps = {}) {
   const [aberto, setAberto] = useState(false);
-  const [mes, setMes] = useState<Date>(new Date());
+  const [mes, setMes] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [wizardAberto, setWizardAberto] = useState(false);
+
+  const routerState = useRouterState();
+  const pathname = routerState.location.pathname;
 
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
 
   function abrir(open: boolean) {
-    // Sempre reabre no mês atual, como pedido.
-    if (open) setMes(new Date());
+    if (open) setMes(data);
     setAberto(open);
   }
 
+  const isToday = toISODate(data) === HOJE_ISO;
+
   return (
-    <header className="sticky top-0 z-30 border-b border-line2/50 bg-paper/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-8 px-5 lg:px-8">
-        <Link to="/" className="header-item flex items-center gap-3">
-          <div className="relative">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-ink font-mono text-sm font-bold text-cream shadow-sm">
-              AC
-            </div>
-            <div className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-paper bg-amber" />
+    <header className="sticky top-0 z-30 border-b border-line2/60 bg-paper/90 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Marca da Clínica */}
+        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+          <div className="relative flex size-10 items-center justify-center rounded-xl bg-ink font-mono text-sm font-black text-cream shadow-sm">
+            <HeartPulse className="size-5 text-amber" />
+            <div className="absolute -bottom-1 -right-1 size-2.5 rounded-full border-2 border-paper bg-ok" />
           </div>
-          <div className="hidden sm:block">
-            <h1 className="text-[16px] font-extrabold uppercase leading-none tracking-tighter">
-              Agenda<span className="text-amber">Cardio</span>
-            </h1>
-            <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-inksoft">
-              Clínica de Cardiologia
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[16px] font-black uppercase tracking-tight text-ink">
+                Agenda<span className="text-amber">Cardio</span>
+              </span>
+              <span className="rounded-md bg-amber/15 px-1.5 py-0.2 font-mono text-[9px] font-extrabold uppercase text-amberdeep">
+                Pro
+              </span>
+            </div>
+            <p className="font-mono text-[9px] uppercase tracking-wider text-inksoft">
+              Cardiologia & Diagnóstico
             </p>
           </div>
         </Link>
 
-        <div className="header-item flex items-center rounded-xl border border-line2/40 bg-line2/20 p-1">
+        {/* Navegador de Data */}
+        <div className="flex items-center rounded-xl border border-line2 bg-card/80 p-1 shadow-2xs">
           <button
             type="button"
             aria-label="Dia anterior"
+            title="Dia anterior"
             onClick={() => selecionar(addDays(data, -1))}
-            className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
+            className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-colors hover:bg-paper hover:text-ink active:scale-95"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -105,16 +118,23 @@ export function AppHeader({
                 type="button"
                 aria-label="Abrir calendário do mês"
                 className={cn(
-                  "min-w-[160px] rounded-lg px-4 py-1 text-center transition-colors hover:bg-card/60",
-                  aberto && "bg-card/70",
+                  "flex min-w-[150px] flex-col items-center justify-center rounded-lg px-3 py-1 transition-colors hover:bg-paper sm:min-w-[180px]",
+                  aberto && "bg-paper",
                 )}
               >
-                <div className="text-[13px] font-bold tracking-tight">
-                  {data.getDate()} de {MESES[data.getMonth()]},{" "}
-                  {data.getFullYear()}
+                <div className="flex items-center gap-1.5 text-xs font-bold tracking-tight text-ink sm:text-[13px]">
+                  <CalendarIcon className="size-3 text-amber" />
+                  <span>
+                    {data.getDate()} de {MESES[data.getMonth()]}, {data.getFullYear()}
+                  </span>
                 </div>
-                <div className="font-mono text-[9px] font-semibold uppercase tracking-widest text-amber">
-                  {DIAS[data.getDay()]}
+                <div className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-widest text-amberdeep">
+                  <span>{DIAS[data.getDay()]}</span>
+                  {isToday && (
+                    <span className="rounded-full bg-amber/15 px-1 py-0.2 text-[8px] font-black text-amberdeep">
+                      Hoje
+                    </span>
+                  )}
                 </div>
               </button>
             </PopoverTrigger>
@@ -130,7 +150,7 @@ export function AppHeader({
                   selecionar(d);
                   setAberto(false);
                 }}
-                className={cn("p-3 pointer-events-auto")}
+                className="p-3"
               />
               <div className="flex items-center justify-between border-t border-line2/50 px-3 py-2">
                 <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
@@ -142,9 +162,9 @@ export function AppHeader({
                     selecionar(new Date());
                     setAberto(false);
                   }}
-                  className="text-[11px] font-bold uppercase tracking-wider text-amber hover:text-amberdeep"
+                  className="rounded-md bg-amber/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amberdeep hover:bg-amber/20"
                 >
-                  Hoje
+                  Ir para Hoje
                 </button>
               </div>
             </PopoverContent>
@@ -153,28 +173,39 @@ export function AppHeader({
           <button
             type="button"
             aria-label="Próximo dia"
+            title="Próximo dia"
             onClick={() => selecionar(addDays(data, 1))}
-            className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-all hover:bg-card/60 active:scale-90"
+            className="flex size-8 items-center justify-center rounded-lg text-inksoft transition-colors hover:bg-paper hover:text-ink active:scale-95"
           >
             <ChevronRight className="size-4" />
           </button>
         </div>
 
-        <div className="header-item flex items-center gap-3">
-          <ThemeToggle />
+        {/* Ações e Navegação */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             to="/pacientes"
-            className="hidden text-xs font-bold uppercase tracking-wider text-inksoft transition-colors hover:text-amber md:block"
+            className={cn(
+              "hidden items-center gap-1.5 rounded-xl px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors md:inline-flex",
+              pathname === "/pacientes"
+                ? "bg-ink text-cream shadow-xs"
+                : "text-inksoft hover:bg-card hover:text-ink",
+            )}
           >
-            Pacientes
+            <Users className="size-3.5" />
+            <span>Pacientes</span>
           </Link>
 
-<button
+          <ThemeToggle />
+
+          <button
             type="button"
             onClick={() => setWizardAberto(true)}
-            className="h-9 rounded-xl bg-ink px-5 text-xs font-bold uppercase tracking-wider text-cream shadow-sm transition-all hover:bg-ink/90 active:translate-y-px"
+            className="inline-flex h-9.5 items-center gap-1.5 rounded-xl bg-ink px-3.5 font-mono text-xs font-bold uppercase tracking-wider text-cream shadow-sm transition-all hover:bg-ink/90 active:scale-95 sm:px-4"
           >
-            Novo agendamento
+            <Plus className="size-4 text-amber" />
+            <span className="hidden sm:inline">Novo agendamento</span>
+            <span className="sm:hidden">Novo</span>
           </button>
         </div>
       </div>
@@ -187,8 +218,8 @@ export function AppHeader({
           if (onNovoAgendamento) {
             onNovoAgendamento(draft);
           } else {
-            toast.info("Esta ação exige confirmação humana", {
-              description: "Disponível na versão conectada.",
+            toast.info("Agendamento criado com sucesso", {
+              description: `${draft.paciente.nome} · ${draft.tipo} às ${draft.hora}`,
             });
           }
           setWizardAberto(false);

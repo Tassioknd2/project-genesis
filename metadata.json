@@ -1,0 +1,6 @@
+{
+  "name": "Agenda Cardio",
+  "description": "Smart medical agenda and patient management system for cardiology clinics with WhatsApp confirmations",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

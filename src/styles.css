@@ -101,47 +101,91 @@
   --ring: var(--amber);
 }
 
-/* Modo escuro — mesma linguagem quente, invertida para papel noturno.
-   Tokens espelham os claros: ink = texto, cream = texto sobre superfícies ink. */
+/* Modo escuro — refinamento clínico de alta legibilidade, contrastes WCAG AA/AAA e conforto ocular.
+   Mantém a identidade da clínica cardiológica com neutros aquecidos, superfícies escalonadas e sem luz ofuscante. */
 .dark {
-  --paper: oklch(0.196 0.011 68.5);
-  --card: oklch(0.243 0.013 70.2);
-  --ink: oklch(0.945 0.011 85.2);
-  --inksoft: oklch(0.732 0.016 80.1);
-  --line: oklch(0.305 0.013 72.4);
-  --line2: oklch(0.375 0.016 72.8);
-  --amber: oklch(0.762 0.114 62.4);
-  --amberdeep: oklch(0.842 0.096 70.5);
-  --cream: oklch(0.19 0.012 68.9);
-  --ok: oklch(0.79 0.108 145.2);
-  --okbg: oklch(0.31 0.045 146.1);
-  --warn: oklch(0.83 0.107 84.6);
-  --warnbg: oklch(0.328 0.05 82.4);
-  --bad: oklch(0.762 0.116 25.8);
-  --badbg: oklch(0.32 0.061 26.4);
-  --mut: oklch(0.762 0.014 78.2);
-  --mutbg: oklch(0.294 0.011 74.6);
+  --radius: 0.75rem;
 
+  /* Superfícies escalonadas (profundidade Z-axis com elevação suave <= 5% de delta) */
+  --paper: oklch(0.165 0.010 65);
+  --card: oklch(0.215 0.012 68);
+  --popover: oklch(0.255 0.014 68);
+
+  /* Tipografia: alto contraste, tom neutro aquecido com zero saturação ciano */
+  --ink: oklch(0.935 0.008 75);
+  --inksoft: oklch(0.670 0.012 75);
+
+  /* Linhas e divisores estruturais */
+  --line: oklch(0.265 0.010 65);
+  --line2: oklch(0.315 0.012 68);
+
+  /* Identidade clínica cardiológica (âmbar quente e terracota) */
+  --amber: oklch(0.745 0.130 55);
+  --amberdeep: oklch(0.825 0.110 60);
+
+  /* Superfície de contraste e texto claro */
+  --cream: oklch(0.950 0.008 75);
+
+  /* Estados clínicos semânticos */
+  --ok: oklch(0.765 0.118 145);
+  --okbg: oklch(0.235 0.038 145);
+  --warn: oklch(0.800 0.115 82);
+  --warnbg: oklch(0.245 0.040 82);
+  --bad: oklch(0.745 0.130 25);
+  --badbg: oklch(0.240 0.045 25);
+  --mut: oklch(0.700 0.012 75);
+  --mutbg: oklch(0.240 0.010 70);
+
+  /* Mapeamento semântico de componentes */
   --background: var(--paper);
   --foreground: var(--ink);
   --card-foreground: var(--ink);
-  --popover: var(--card);
+  --popover: var(--popover);
   --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--cream);
+  --primary: var(--amber);
+  --primary-foreground: oklch(0.180 0.012 68);
   --secondary: var(--mutbg);
   --secondary-foreground: var(--ink);
   --muted: var(--mutbg);
   --muted-foreground: var(--inksoft);
   --accent: var(--amber);
-  --accent-foreground: var(--cream);
+  --accent-foreground: oklch(0.180 0.012 68);
   --destructive: var(--bad);
-  --destructive-foreground: var(--cream);
+  --destructive-foreground: oklch(0.180 0.012 68);
   --border: var(--line2);
   --input: var(--line2);
   --ring: var(--amber);
 }
 
+/* Refinamento de controles interativos no modo escuro */
+.dark .bg-ink {
+  background-color: oklch(0.270 0.014 68);
+  color: oklch(0.950 0.008 75);
+  border: 1px solid oklch(0.350 0.016 68);
+}
+.dark .bg-ink:hover {
+  background-color: oklch(0.315 0.016 68);
+  border-color: oklch(0.420 0.020 68);
+}
+.dark button.bg-amber,
+.dark .bg-amber.text-cream,
+.dark .bg-amber .text-cream {
+  color: oklch(0.180 0.012 68);
+}
+.dark button.bg-amber:hover {
+  filter: brightness(1.06);
+}
+.dark button.bg-ok,
+.dark .bg-ok.text-cream,
+.dark .bg-ok .text-cream {
+  color: oklch(0.180 0.012 68);
+}
+.dark .ring-ink {
+  --tw-ring-color: var(--amber);
+}
+.dark .border-ink {
+  border-color: var(--amber);
+}
 
 @layer base {
   * {
@@ -225,18 +269,18 @@
 }
 
 .dark {
-  --tag-ambar-bg: oklch(0.36 0.06 70);
-  --tag-ambar-fg: oklch(0.88 0.09 75);
-  --tag-verde-bg: oklch(0.34 0.055 145);
-  --tag-verde-fg: oklch(0.86 0.09 145);
-  --tag-azul-bg: oklch(0.34 0.055 250);
-  --tag-azul-fg: oklch(0.86 0.07 245);
-  --tag-vermelho-bg: oklch(0.34 0.065 27);
-  --tag-vermelho-fg: oklch(0.86 0.09 27);
-  --tag-roxo-bg: oklch(0.34 0.06 300);
-  --tag-roxo-fg: oklch(0.87 0.075 300);
-  --tag-cinza-bg: oklch(0.33 0.01 76);
-  --tag-cinza-fg: oklch(0.86 0.01 80);
+  --tag-ambar-bg: oklch(0.280 0.055 60);
+  --tag-ambar-fg: oklch(0.860 0.090 65);
+  --tag-verde-bg: oklch(0.270 0.050 145);
+  --tag-verde-fg: oklch(0.850 0.095 145);
+  --tag-azul-bg: oklch(0.270 0.050 245);
+  --tag-azul-fg: oklch(0.850 0.085 240);
+  --tag-vermelho-bg: oklch(0.280 0.055 25);
+  --tag-vermelho-fg: oklch(0.860 0.095 25);
+  --tag-roxo-bg: oklch(0.280 0.055 300);
+  --tag-roxo-fg: oklch(0.860 0.085 300);
+  --tag-cinza-bg: oklch(0.270 0.012 75);
+  --tag-cinza-fg: oklch(0.850 0.012 75);
 }
 
 @utility tag-ambar {
