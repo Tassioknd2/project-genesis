@@ -376,22 +376,6 @@ function AgendaPage() {
       <ScrollProgressHeart />
 
       <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* Banner do Dia Selecionado */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-amber" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-inksoft">
-              Atendimento do Dia
-            </span>
-          </div>
-          <h2 className="mt-1 text-2xl font-black capitalize tracking-tight text-ink sm:text-3xl">
-            {dataSelecionada.toLocaleDateString("pt-BR", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </h2>
-        </div>
 
         {/* Indicadores do dia — Linha interativa */}
         <section
