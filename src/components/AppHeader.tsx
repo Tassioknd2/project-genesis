@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
@@ -9,12 +9,18 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { HOJE_ISO, fromISODate, toISODate } from "@/lib/agenda-data";
+import {
+  HOJE_ISO,
+  fromISODate,
+  getAgendaPorData,
+  toISODate,
+  type Appointment,
+} from "@/lib/agenda-data";
+import { CalendarioPainel } from "@/components/CalendarioPainel";
+import { VisaoDoMesDialog } from "@/components/VisaoDoMesDialog";
 import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
@@ -24,7 +30,10 @@ interface AppHeaderProps {
   selectedDate?: Date;
   onSelectDate?: (date: Date) => void;
   onNovoAgendamento?: (draft: NovoAgendamentoDraft) => void;
+  /** Resolve a agenda de uma data (inclui alterações feitas na sessão). */
+  agendaDoDia?: (iso: string) => Appointment[];
 }
+
 
 const MESES = [
   "Janeiro",
@@ -57,11 +66,17 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-export function AppHeader({ selectedDate, onSelectDate, onNovoAgendamento }: AppHeaderProps = {}) {
+export function AppHeader({
+  selectedDate,
+  onSelectDate,
+  onNovoAgendamento,
+  agendaDoDia,
+}: AppHeaderProps = {}) {
   const [aberto, setAberto] = useState(false);
   const [mes, setMes] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [wizardAberto, setWizardAberto] = useState(false);
+  const [visaoMesAberta, setVisaoMesAberta] = useState(false);
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
@@ -69,12 +84,18 @@ export function AppHeader({ selectedDate, onSelectDate, onNovoAgendamento }: App
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
 
+  const resolverAgenda = useCallback(
+    (iso: string) => (agendaDoDia ? agendaDoDia(iso) : getAgendaPorData(iso)),
+    [agendaDoDia],
+  );
+
   function abrir(open: boolean) {
     if (open) setMes(data);
     setAberto(open);
   }
 
   const isToday = toISODate(data) === HOJE_ISO;
+
 
   return (
     <header className="sticky top-0 z-30 border-b border-line2/60 bg-paper/90 backdrop-blur-md">
