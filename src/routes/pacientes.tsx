@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
+import { BotaoCaneta } from "@/components/BotaoCaneta";
+import {
+  EditarRegistroDialog,
+  type EdicaoResultado,
+} from "@/components/EditarRegistroDialog";
 import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
@@ -57,6 +62,8 @@ function PacientesPage() {
   const [filtroConvenio, setFiltroConvenio] = useState<string>("todos");
   const [pacienteParaAgendar, setPacienteParaAgendar] = useState<Patient | null>(null);
   const [wizardAberto, setWizardAberto] = useState(false);
+  const [pacienteParaEditar, setPacienteParaEditar] = useState<Patient | null>(null);
+  const [versao, setVersao] = useState(0);
 
   const convenios = useMemo(() => {
     const set = new Set<string>();
