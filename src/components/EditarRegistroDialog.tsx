@@ -106,14 +106,15 @@ export function EditarRegistroDialog({
       ? calcularIdade(dataNascimento, paciente.idade)
       : paciente.idade;
 
-    const atualizado: Patient = {
+const atualizado: Patient = {
       ...paciente,
       nome: nome.trim(),
       idade: finalIdade,
-      dataNascimento: dataNascimento.trim() || undefined,
       telefone: telefone.trim(),
       convenio: convenio.trim() || paciente.convenio,
     };
+    if (dataNascimento.trim()) atualizado.dataNascimento = dataNascimento.trim();
+    else delete atualizado.dataNascimento;
     if (observacoes.trim()) atualizado.observacoes = observacoes.trim();
     else delete atualizado.observacoes;
 
