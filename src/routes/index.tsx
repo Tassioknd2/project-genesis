@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -380,7 +380,9 @@ function AgendaPage() {
         selectedDate={dataSelecionada}
         onSelectDate={setDataSelecionada}
         onNovoAgendamento={handleNovoAgendamento}
+        agendaDoDia={resolverAgenda}
       />
+
       <ScrollProgressHeart />
 
       <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
