@@ -160,35 +160,27 @@ export function AppHeader({
               </button>
             </PopoverTrigger>
             <PopoverContent align="center" className="w-auto p-0">
-              <Calendar
-                mode="single"
-                locale={ptBR}
-                month={mes}
-                onMonthChange={setMes}
-                selected={data}
-                onSelect={(d) => {
-                  if (!d) return;
+              <CalendarioPainel
+                mes={mes}
+                onMesChange={setMes}
+                selecionada={data}
+                onSelecionar={(d) => {
                   selecionar(d);
                   setAberto(false);
                 }}
-                className="p-3"
+                hojeISO={HOJE_ISO}
+                agendaDoDia={resolverAgenda}
+                onAbrirVisaoMes={() => {
+                  setAberto(false);
+                  setVisaoMesAberta(true);
+                }}
+                onIrParaHoje={() => {
+                  selecionar(fromISODate(HOJE_ISO));
+                  setAberto(false);
+                }}
               />
-              <div className="flex items-center justify-between border-t border-line2/50 px-3 py-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
-                  Escolha um dia
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    selecionar(new Date());
-                    setAberto(false);
-                  }}
-                  className="rounded-md bg-amber/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amberdeep hover:bg-amber/20"
-                >
-                  Ir para Hoje
-                </button>
-              </div>
             </PopoverContent>
+
           </Popover>
 
           <button
