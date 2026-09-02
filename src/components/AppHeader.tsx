@@ -238,6 +238,18 @@ export function AppHeader({
           setWizardAberto(false);
         }}
       />
+
+      <VisaoDoMesDialog
+        open={visaoMesAberta}
+        onOpenChange={setVisaoMesAberta}
+        mes={mes}
+        onMesChange={setMes}
+        selecionada={data}
+        onSelecionarDia={selecionar}
+        hojeISO={HOJE_ISO}
+        agendaDoDia={resolverAgenda}
+      />
+
     </header>
   );
 }
