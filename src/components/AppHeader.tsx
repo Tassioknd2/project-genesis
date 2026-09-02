@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
@@ -77,6 +77,12 @@ export function AppHeader({
   const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [wizardAberto, setWizardAberto] = useState(false);
   const [visaoMesAberta, setVisaoMesAberta] = useState(false);
+  const [hojeISO, setHojeISO] = useState(HOJE_ISO);
+
+  // O "hoje" real da máquina só é lido após a hidratação (evita divergência no SSR).
+  useEffect(() => {
+    setHojeISO(toISODate(new Date()));
+  }, []);
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
@@ -94,7 +100,7 @@ export function AppHeader({
     setAberto(open);
   }
 
-  const isToday = toISODate(data) === HOJE_ISO;
+  const isToday = toISODate(data) === hojeISO;
 
 
   return (
@@ -168,14 +174,16 @@ export function AppHeader({
                   selecionar(d);
                   setAberto(false);
                 }}
-                hojeISO={HOJE_ISO}
+                hojeISO={hojeISO}
                 agendaDoDia={resolverAgenda}
                 onAbrirVisaoMes={() => {
                   setAberto(false);
                   setVisaoMesAberta(true);
                 }}
                 onIrParaHoje={() => {
-                  selecionar(fromISODate(HOJE_ISO));
+                  const hoje = fromISODate(hojeISO);
+                  selecionar(hoje);
+                  setMes(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
                   setAberto(false);
                 }}
               />
@@ -246,7 +254,7 @@ export function AppHeader({
         onMesChange={setMes}
         selecionada={data}
         onSelecionarDia={selecionar}
-        hojeISO={HOJE_ISO}
+        hojeISO={hojeISO}
         agendaDoDia={resolverAgenda}
       />
 
