@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
@@ -77,6 +77,12 @@ export function AppHeader({
   const [dataLocal, setDataLocal] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [wizardAberto, setWizardAberto] = useState(false);
   const [visaoMesAberta, setVisaoMesAberta] = useState(false);
+  const [hojeISO, setHojeISO] = useState(HOJE_ISO);
+
+  // O "hoje" real da máquina só é lido após a hidratação (evita divergência no SSR).
+  useEffect(() => {
+    setHojeISO(toISODate(new Date()));
+  }, []);
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
@@ -94,7 +100,7 @@ export function AppHeader({
     setAberto(open);
   }
 
-  const isToday = toISODate(data) === HOJE_ISO;
+  const isToday = toISODate(data) === hojeISO;
 
 
   return (
@@ -160,35 +166,29 @@ export function AppHeader({
               </button>
             </PopoverTrigger>
             <PopoverContent align="center" className="w-auto p-0">
-              <Calendar
-                mode="single"
-                locale={ptBR}
-                month={mes}
-                onMonthChange={setMes}
-                selected={data}
-                onSelect={(d) => {
-                  if (!d) return;
+              <CalendarioPainel
+                mes={mes}
+                onMesChange={setMes}
+                selecionada={data}
+                onSelecionar={(d) => {
                   selecionar(d);
                   setAberto(false);
                 }}
-                className="p-3"
+                hojeISO={hojeISO}
+                agendaDoDia={resolverAgenda}
+                onAbrirVisaoMes={() => {
+                  setAberto(false);
+                  setVisaoMesAberta(true);
+                }}
+                onIrParaHoje={() => {
+                  const hoje = fromISODate(hojeISO);
+                  selecionar(hoje);
+                  setMes(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+                  setAberto(false);
+                }}
               />
-              <div className="flex items-center justify-between border-t border-line2/50 px-3 py-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
-                  Escolha um dia
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    selecionar(new Date());
-                    setAberto(false);
-                  }}
-                  className="rounded-md bg-amber/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amberdeep hover:bg-amber/20"
-                >
-                  Ir para Hoje
-                </button>
-              </div>
             </PopoverContent>
+
           </Popover>
 
           <button
@@ -246,6 +246,18 @@ export function AppHeader({
           setWizardAberto(false);
         }}
       />
+
+      <VisaoDoMesDialog
+        open={visaoMesAberta}
+        onOpenChange={setVisaoMesAberta}
+        mes={mes}
+        onMesChange={setMes}
+        selecionada={data}
+        onSelecionarDia={selecionar}
+        hojeISO={hojeISO}
+        agendaDoDia={resolverAgenda}
+      />
+
     </header>
   );
 }

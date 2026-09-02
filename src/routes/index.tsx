@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -97,13 +97,21 @@ function AgendaPage() {
     if (toISODate(hoje) !== HOJE_ISO) setDataSelecionada(hoje);
   }, []);
 
-  // Agenda do dia = base fictícia + criados na sessão - remarcados para outro dia + alterações,
-  // sempre ordenada por horário.
-  const agenda = useMemo(() => {
-    const base = [...getAgendaPorData(isoSelecionado), ...(extras[isoSelecionado] ?? [])];
-    const filtrados = base.filter((a) => !(removidos[isoSelecionado] ?? []).includes(a.id));
-    return ordenarPorHorario(filtrados.map((a) => alteracoes[a.id] ?? a));
-  }, [isoSelecionado, extras, alteracoes, removidos]);
+  // Agenda de qualquer data = base fictícia + criados na sessão - remarcados + alterações.
+  const resolverAgenda = useCallback(
+    (iso: string) => {
+      const base = [...getAgendaPorData(iso), ...(extras[iso] ?? [])];
+      const filtrados = base.filter((a) => !(removidos[iso] ?? []).includes(a.id));
+      return ordenarPorHorario(filtrados.map((a) => alteracoes[a.id] ?? a));
+    },
+    [extras, alteracoes, removidos],
+  );
+
+  const agenda = useMemo(
+    () => resolverAgenda(isoSelecionado),
+    [isoSelecionado, resolverAgenda],
+  );
+
 
   useEffect(() => {
     setFiltro("todos");
@@ -372,7 +380,9 @@ function AgendaPage() {
         selectedDate={dataSelecionada}
         onSelectDate={setDataSelecionada}
         onNovoAgendamento={handleNovoAgendamento}
+        agendaDoDia={resolverAgenda}
       />
+
       <ScrollProgressHeart />
 
       <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
