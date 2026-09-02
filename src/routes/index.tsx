@@ -1,20 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertTriangle,
-  CalendarDays,
-  CheckCircle2,
-  Clock,
-  FlaskConical,
-  MessageCircle,
-  Search,
-  Stethoscope,
-  UserX,
-  X,
-} from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
-import { AppointmentCard, type Action } from "@/components/AppointmentCard";
+import { DesktopAgendaView, type FiltroAgenda } from "@/components/desktop/DesktopAgendaView";
+import { MobileAgendaView, type FiltroMobile } from "@/components/mobile/MobileAgendaView";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { EditarRegistroDialog, type EdicaoResultado } from "@/components/EditarRegistroDialog";
 import { ScrollProgressHeart } from "@/components/ScrollProgressHeart";
 import {
@@ -32,17 +22,18 @@ import {
   formatarTipos,
   fromISODate,
   getAgendaPorData,
+  isPendencia,
   ordenarPorHorario,
   pacientes,
   statusInfo,
   toISODate,
   type Appointment,
-  type AppointmentStatus,
   type CategoriaAtendimento,
   type Etiqueta,
   type EtiquetaCor,
 } from "@/lib/agenda-data";
-import { cn } from "@/lib/utils";
+import type { Action } from "@/components/desktop/DesktopAppointmentCard";
+import type { MobileAction } from "@/components/mobile/MobileAppointmentCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,16 +56,6 @@ export const Route = createFileRoute("/")({
   component: AgendaPage,
 });
 
-type Filtro = "todos" | AppointmentStatus;
-
-const filtrosPrincipais: { id: Filtro; rotulo: string }[] = [
-  { id: "todos", rotulo: "Todos" },
-  { id: "confirmado", rotulo: "Confirmados" },
-  { id: "aguardando", rotulo: "Aguardando" },
-  { id: "agendado", rotulo: "Agendados" },
-  { id: "recusado", rotulo: "Recusados" },
-];
-
 function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
   const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
@@ -82,7 +63,7 @@ function AgendaPage() {
   const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
   const [notas, setNotas] = useState<Record<string, string[]>>({});
   const [etiquetas, setEtiquetas] = useState<Record<string, Etiqueta[]>>({});
-  const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [filtro, setFiltro] = useState<FiltroAgenda>("todos");
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
   const [editando, setEditando] = useState<Appointment | null>(null);
@@ -107,11 +88,7 @@ function AgendaPage() {
     [extras, alteracoes, removidos],
   );
 
-  const agenda = useMemo(
-    () => resolverAgenda(isoSelecionado),
-    [isoSelecionado, resolverAgenda],
-  );
-
+  const agenda = useMemo(() => resolverAgenda(isoSelecionado), [isoSelecionado, resolverAgenda]);
 
   useEffect(() => {
     setFiltro("todos");
@@ -120,10 +97,15 @@ function AgendaPage() {
   const confirmados = agenda.filter(
     (a) => a.status === "confirmado" || a.status === "concluido",
   ).length;
-  const recusados = agenda.filter((a) => a.pendencia === "recusado").length;
-  const semResposta = agenda.filter((a) => a.pendencia === "sem_resposta").length;
-  const falhas = agenda.filter((a) => a.pendencia === "falha_envio").length;
+  const pendenciasList = agenda.filter(isPendencia);
+  const totalPendencias = pendenciasList.length;
+  const semResposta = agenda.filter(
+    (a) => a.status === "aguardando" || a.pendencia === "sem_resposta",
+  ).length;
   const faltas = agenda.filter((a) => a.status === "falta").length;
+  const recusados = agenda.filter(
+    (a) => a.status === "recusado" || a.pendencia === "recusado",
+  ).length;
   const total = agenda.length;
 
   const totalExames = agenda.filter((a) => {
@@ -147,7 +129,11 @@ function AgendaPage() {
               : categoriaDe(a.tipo) === categoria;
           if (!matchCat) return false;
         }
-        if (filtro !== "todos" && a.status !== filtro) return false;
+        if (filtro === "pendencias") {
+          if (!isPendencia(a)) return false;
+        } else if (filtro !== "todos" && a.status !== filtro) {
+          return false;
+        }
         if (busca) {
           const q = busca.toLowerCase();
           const matchTipo =
@@ -164,7 +150,7 @@ function AgendaPage() {
     [agenda, filtro, busca, categoria],
   );
 
-  function handleAction(appointment: Appointment, action: Action) {
+  function handleAction(appointment: Appointment, action: Action | MobileAction) {
     if (action.status === "remarcado" || action.label.toLowerCase().includes("remarcar")) {
       setRemarcando(appointment);
       return;
@@ -202,7 +188,6 @@ function AgendaPage() {
     const isoDestino = toISODate(novaData);
     const primaryTipo = tipos[0] || appointment.tipo;
 
-    // Atualizar paciente cadastrado se necessário
     const idxPaciente = pacientes.findIndex((p) => p.id === pac.id);
     if (idxPaciente >= 0) pacientes[idxPaciente] = pac;
     else pacientes.push(pac);
@@ -231,13 +216,11 @@ function AgendaPage() {
     }
 
     if (isoDestino === isoSelecionado) {
-      // Mesmo dia: atualiza horário e procedimentos
       setAlteracoes((atual) => ({
         ...atual,
         [atualizado.id]: atualizado,
       }));
     } else {
-      // Dia diferente: remove da data atual e insere na nova data
       setRemovidos((prev) => ({
         ...prev,
         [isoSelecionado]: [...(prev[isoSelecionado] ?? []), appointment.id],
@@ -375,7 +358,7 @@ function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper font-sans text-ink selection:bg-amber/20">
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-paper font-sans text-ink selection:bg-amber/20">
       <AppHeader
         selectedDate={dataSelecionada}
         onSelectDate={setDataSelecionada}
@@ -385,336 +368,103 @@ function AgendaPage() {
 
       <ScrollProgressHeart />
 
-      <main className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
-
-        {/* Indicadores do dia — Linha interativa */}
-        <section
-          aria-label="Indicadores do dia"
-          className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-        >
-          {/* Total Agendamentos */}
-          <button
-            type="button"
-            onClick={() => setFiltro("todos")}
-            className={cn(
-              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
-              filtro === "todos"
-                ? "border-ink bg-card ring-1 ring-ink shadow-2xs"
-                : "border-line2/70 bg-card hover:border-amber/40 shadow-2xs",
-            )}
-            style={{ animationDelay: "50ms" }}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber/10 text-amberdeep">
-              <CalendarDays className="size-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-inksoft">
-                Total Dia
-              </div>
-              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-ink">
-                {total}
-              </div>
-            </div>
-          </button>
-
-          {/* Confirmados */}
-          <button
-            type="button"
-            onClick={() => setFiltro(filtro === "confirmado" ? "todos" : "confirmado")}
-            className={cn(
-              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
-              filtro === "confirmado"
-                ? "border-ok bg-ok/5 ring-1 ring-ok shadow-2xs"
-                : "border-line2/70 bg-card hover:border-ok/40 shadow-2xs",
-            )}
-            style={{ animationDelay: "100ms" }}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ok/10 text-ok">
-              <CheckCircle2 className="size-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-ok">
-                Confirmados
-              </div>
-              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-ok">
-                {confirmados}
-                <span className="ml-1 text-xs font-semibold text-inksoft">/ {total}</span>
-              </div>
-            </div>
-          </button>
-
-          {/* Faltas */}
-          <button
-            type="button"
-            onClick={() => setFiltro(filtro === "falta" ? "todos" : "falta")}
-            className={cn(
-              "card-rise flex items-center gap-3 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]",
-              filtro === "falta"
-                ? "border-bad bg-bad/5 ring-1 ring-bad shadow-2xs"
-                : "border-line2/70 bg-card hover:border-bad/40 shadow-2xs",
-            )}
-            style={{ animationDelay: "150ms" }}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-bad/10 text-bad">
-              <UserX className="size-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-bad">
-                Faltas
-              </div>
-              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-bad">
-                {faltas}
-              </div>
-            </div>
-          </button>
-
-          {/* Taxa de Confirmação WhatsApp */}
-          <div
-            className="card-rise flex items-center gap-3 rounded-2xl bg-ink p-4 text-paper shadow-xs"
-            style={{ animationDelay: "200ms" }}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-paper/10 text-amber">
-              <MessageCircle className="size-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest opacity-70">
-                Confirmação
-              </div>
-              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums">
-                {taxaConfirmacao}
-                <span className="ml-0.5 text-xs opacity-70">%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Pendências */}
-          <button
-            type="button"
-            onClick={() => setFiltro("todos")}
-            title={`${recusados} recusado(s) · ${semResposta} sem resposta · ${falhas} falha(s) de envio`}
-            className="card-rise flex items-center gap-3 rounded-2xl border border-amber/40 bg-amber/5 p-4 text-left shadow-2xs transition-all duration-200 hover:border-amber active:scale-[0.98]"
-            style={{ animationDelay: "250ms" }}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber/15 text-amberdeep">
-              <AlertTriangle className="size-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate font-mono text-[9px] font-bold uppercase tracking-widest text-amberdeep">
-                Pendências
-              </div>
-              <div className="text-2xl font-black leading-tight tracking-tight tabular-nums text-amberdeep">
-                {recusados + semResposta + falhas}
-              </div>
-            </div>
-          </button>
-        </section>
-
-        {/* Busca e filtros */}
-        <section
-          className="card-rise mb-6 flex flex-col items-stretch gap-3 md:flex-row"
-          style={{ animationDelay: "280ms" }}
-          aria-label="Busca e filtros"
-        >
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-inksoft/60" />
-            <input
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por paciente, tipo de atendimento ou convênio..."
-              className="h-12 w-full rounded-2xl border border-line2 bg-card pl-11 pr-10 text-xs font-medium text-ink shadow-2xs transition-all placeholder:text-inksoft/50 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20"
-            />
-            {busca && (
-              <button
-                type="button"
-                aria-label="Limpar busca"
-                onClick={() => setBusca("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-inksoft/60 hover:text-ink"
-              >
-                <X className="size-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-line2 bg-card p-1.5">
-            {filtrosPrincipais.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFiltro(f.id)}
-                className={cn(
-                  "h-9 whitespace-nowrap rounded-xl px-3.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-all",
-                  filtro === f.id ? "bg-ink text-cream shadow-2xs" : "text-inksoft hover:bg-paper",
-                )}
-              >
-                {f.rotulo}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Filtro por categoria — Exames × Consultas */}
-        <section
-          aria-label="Filtrar por tipo de atendimento"
-          className="card-rise mb-6"
-          style={{ animationDelay: "320ms" }}
-        >
-          <div
-            role="group"
-            aria-label="Categoria"
-            className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2"
-          >
-            <button
-              type="button"
-              aria-pressed={categoria === "exame"}
-              onClick={() => setCategoria((c) => (c === "exame" ? null : "exame"))}
-              className={cn(
-                "flex items-center justify-center gap-3 rounded-2xl border p-3.5 shadow-2xs transition-all duration-200 active:scale-[0.98]",
-                categoria === "exame"
-                  ? "border-ink bg-ink text-cream shadow-xs"
-                  : "border-line2 bg-card text-ink hover:border-amber/40 hover:bg-amber/5",
-              )}
-            >
-              <FlaskConical
-                className={cn(
-                  "size-4.5 shrink-0 transition-colors",
-                  categoria === "exame" ? "text-amber" : "text-amberdeep",
-                )}
-                aria-hidden
-              />
-              <span className="font-mono text-xs font-black uppercase tracking-wider">Exames</span>
-              <span
-                className={cn(
-                  "rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors",
-                  categoria === "exame" ? "bg-amber/20 text-amber" : "bg-amber/10 text-amberdeep",
-                )}
-              >
-                {totalExames} {totalExames === 1 ? "agendado" : "agendados"}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              aria-pressed={categoria === "consulta"}
-              onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
-              className={cn(
-                "flex items-center justify-center gap-3 rounded-2xl border p-3.5 shadow-2xs transition-all duration-200 active:scale-[0.98]",
-                categoria === "consulta"
-                  ? "border-ink bg-ink text-cream shadow-xs"
-                  : "border-line2 bg-card text-ink hover:border-amber/40 hover:bg-amber/5",
-              )}
-            >
-              <Stethoscope
-                className={cn(
-                  "size-4.5 shrink-0 transition-colors",
-                  categoria === "consulta" ? "text-amber" : "text-inksoft",
-                )}
-                aria-hidden
-              />
-              <span className="font-mono text-xs font-black uppercase tracking-wider">
-                Consultas
-              </span>
-              <span
-                className={cn(
-                  "rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors",
-                  categoria === "consulta" ? "bg-amber/20 text-amber" : "bg-mutbg text-inksoft",
-                )}
-              >
-                {totalConsultas} {totalConsultas === 1 ? "agendada" : "agendadas"}
-              </span>
-            </button>
-          </div>
-        </section>
-
-        {/* Lista de agendamentos */}
-        <section aria-label="Agenda do dia" className="space-y-3.5">
-          {visiveis.map((appointment, i) => (
-            <AppointmentCard
-              key={appointment.id}
-              appointment={appointment}
-              index={i}
-              onAction={handleAction}
-              notas={notas[appointment.id] ?? []}
-              etiquetas={etiquetas[appointment.id] ?? []}
-              onAddNota={(texto) => addNota(appointment.id, texto)}
-              onRemoveNota={(indice) => removeNota(appointment.id, indice)}
-              onAddEtiqueta={(texto, cor) => addEtiqueta(appointment.id, texto, cor)}
-              onRemoveEtiqueta={(idEtiqueta) => removeEtiqueta(appointment.id, idEtiqueta)}
-              onEditar={() => setEditando(appointment)}
-              onRemarcar={(app) => setRemarcando(app)}
-            />
-          ))}
-
-          {visiveis.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-line2 bg-card p-12 text-center shadow-2xs">
-              <Clock className="mx-auto mb-2 size-8 text-inksoft/40" />
-              <p className="text-sm font-bold text-ink">
-                Nenhum agendamento encontrado para os filtros selecionados.
-              </p>
-              <p className="mt-1 text-xs text-inksoft">
-                Tente limpar os termos de busca ou selecionar outra data no cabeçalho.
-              </p>
-              <div className="mt-4 flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFiltro("todos");
-                    setBusca("");
-                    setCategoria(null);
-                  }}
-                  className="rounded-xl border border-line2 bg-paper px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:border-ink/40"
-                >
-                  Limpar filtros
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWizardAberto(true)}
-                  className="rounded-xl bg-ink px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-cream shadow-2xs transition-all hover:bg-ink/90"
-                >
-                  Criar Agendamento
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {editando && (
-          <EditarRegistroDialog
-            open={!!editando}
-            onOpenChange={(aberto) => !aberto && setEditando(null)}
-            paciente={editando.paciente}
-            appointment={editando}
-            onSalvar={(resultado) => salvarEdicao(editando, resultado)}
-          />
-        )}
-
-        {remarcando && (
-          <RemarcarAgendamentoDialog
-            open={!!remarcando}
-            onOpenChange={(aberto) => !aberto && setRemarcando(null)}
-            appointment={remarcando}
-            dataAtual={dataSelecionada}
-            onConfirmarRemarcacao={handleRemarcarConfirmado}
-            onCancelarAgendamento={handleCancelarAgendamento}
-          />
-        )}
-
-        <NovoAgendamentoWizard
-          open={wizardAberto}
-          onOpenChange={setWizardAberto}
-          dataInicial={dataSelecionada}
-          onSalvar={handleNovoAgendamento}
+      {/* Camada Desktop (Totalmente Intacta e Isolada) */}
+      <main className="hidden md:block">
+        <DesktopAgendaView
+          dataSelecionada={dataSelecionada}
+          total={total}
+          confirmados={confirmados}
+          faltas={faltas}
+          taxaConfirmacao={taxaConfirmacao}
+          totalPendencias={totalPendencias}
+          semResposta={semResposta}
+          recusados={recusados}
+          totalExames={totalExames}
+          totalConsultas={totalConsultas}
+          filtro={filtro}
+          setFiltro={setFiltro}
+          busca={busca}
+          setBusca={setBusca}
+          categoria={categoria}
+          setCategoria={setCategoria}
+          visiveis={visiveis}
+          notas={notas}
+          etiquetas={etiquetas}
+          onAction={handleAction}
+          onAddNota={addNota}
+          onRemoveNota={removeNota}
+          onAddEtiqueta={addEtiqueta}
+          onRemoveEtiqueta={removeEtiqueta}
+          onEditar={(app) => setEditando(app)}
+          onRemarcar={(app) => setRemarcando(app)}
+          onAbrirWizard={() => setWizardAberto(true)}
         />
-
-        <footer className="mt-12 flex items-center justify-between border-t border-line2/40 py-8">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft">
-            Clínica de Cardiologia · Dr. Carlos Mendes (CRM 123.456-SP)
-          </span>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-inksoft/70">
-            Agenda Cardio v2.0
-          </span>
-        </footer>
       </main>
+
+      {/* Camada Mobile (Base Dedicada e Separada para Evolução Mobile) */}
+      <main className="block md:hidden">
+        <MobileAgendaView
+          dataSelecionada={dataSelecionada}
+          onSelectDate={setDataSelecionada}
+          total={total}
+          confirmados={confirmados}
+          faltas={faltas}
+          totalPendencias={totalPendencias}
+          totalExames={totalExames}
+          totalConsultas={totalConsultas}
+          filtro={filtro as FiltroMobile}
+          setFiltro={setFiltro as React.Dispatch<React.SetStateAction<FiltroMobile>>}
+          busca={busca}
+          setBusca={setBusca}
+          categoria={categoria}
+          setCategoria={setCategoria}
+          visiveis={visiveis}
+          notas={notas}
+          etiquetas={etiquetas}
+          onAction={handleAction}
+          onEditar={(app) => setEditando(app)}
+          onRemarcar={(app) => setRemarcando(app)}
+          onAbrirWizard={() => setWizardAberto(true)}
+        />
+      </main>
+
+      {/* Barra de Navegação Inferior Móvel */}
+      <MobileBottomNav
+        totalPendencias={totalPendencias}
+        onNovoAgendamento={() => setWizardAberto(true)}
+        onFiltroPendencias={() =>
+          setFiltro((prev) => (prev === "pendencias" ? "todos" : "pendencias"))
+        }
+        isFiltroPendenciasAtivo={filtro === "pendencias"}
+      />
+
+      {editando && (
+        <EditarRegistroDialog
+          open={!!editando}
+          onOpenChange={(aberto) => !aberto && setEditando(null)}
+          paciente={editando.paciente}
+          appointment={editando}
+          onSalvar={(resultado) => salvarEdicao(editando, resultado)}
+        />
+      )}
+
+      {remarcando && (
+        <RemarcarAgendamentoDialog
+          open={!!remarcando}
+          onOpenChange={(aberto) => !aberto && setRemarcando(null)}
+          appointment={remarcando}
+          dataAtual={dataSelecionada}
+          onConfirmarRemarcacao={handleRemarcarConfirmado}
+          onCancelarAgendamento={handleCancelarAgendamento}
+        />
+      )}
+
+      <NovoAgendamentoWizard
+        open={wizardAberto}
+        onOpenChange={setWizardAberto}
+        dataInicial={dataSelecionada}
+        onSalvar={handleNovoAgendamento}
+      />
     </div>
   );
 }

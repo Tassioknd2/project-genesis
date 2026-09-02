@@ -1,12 +1,14 @@
 import { useMemo } from "react";
-import { CalendarRange, ChevronLeft, ChevronRight, RefreshCcw, Stethoscope, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
-  categoriaDe,
-  fromISODate,
-  toISODate,
-  type Appointment,
-} from "@/lib/agenda-data";
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCcw,
+  Stethoscope,
+  Users,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { categoriaDe, fromISODate, toISODate, type Appointment } from "@/lib/agenda-data";
 
 const DIAS_CURTOS = ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"];
 const MESES = [
@@ -89,7 +91,10 @@ export function CalendarioPainel({
 
   const isoSelecionado = toISODate(selecionada);
   const listaDoDia = useMemo(
-    () => agendaDoDia(isoSelecionado).slice().sort((a, b) => a.hora.localeCompare(b.hora)),
+    () =>
+      agendaDoDia(isoSelecionado)
+        .slice()
+        .sort((a, b) => a.hora.localeCompare(b.hora)),
     [isoSelecionado, agendaDoDia],
   );
 

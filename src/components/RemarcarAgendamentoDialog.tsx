@@ -12,6 +12,7 @@ import {
   UserCheck,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -138,7 +139,7 @@ export function RemarcarAgendamentoDialog({
     );
   }, [buscaPaciente]);
 
-if (!appointment) return null;
+  if (!appointment) return null;
   const appt = appointment;
 
   function toggleTipo(t: TipoAtendimento) {
@@ -162,7 +163,7 @@ if (!appointment) return null;
   function handleSalvar() {
     if (!hora || tipos.length === 0 || !pacienteSelecionado) return;
 
-onConfirmarRemarcacao({
+    onConfirmarRemarcacao({
       appointment: appt,
       novaData: data,
       novoHorario: hora,
@@ -254,14 +255,32 @@ onConfirmarRemarcacao({
             ) : (
               <div className="mt-3 space-y-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-inksoft" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-inksoft" />
                   <input
                     type="text"
                     value={buscaPaciente}
                     onChange={(e) => setBuscaPaciente(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setBuscaPaciente("");
+                    }}
                     placeholder="Buscar outro paciente por nome, telefone ou convênio..."
-                    className="h-9 w-full rounded-xl border border-line2 bg-card pl-9 pr-3 text-xs font-medium text-ink placeholder:text-inksoft/50 focus:border-amber focus:outline-none"
+                    className={cn(
+                      "h-9 w-full rounded-xl border border-line2 bg-card pl-9 text-xs font-medium text-ink placeholder:text-inksoft/50 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20",
+                      buscaPaciente ? "pr-22" : "pr-3",
+                    )}
                   />
+                  {buscaPaciente && (
+                    <button
+                      type="button"
+                      aria-label="Apagar tudo da busca"
+                      title="Apagar tudo (ESC)"
+                      onClick={() => setBuscaPaciente("")}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-6.5 items-center gap-1 rounded-lg border border-amber/50 bg-amber/15 px-2 font-mono text-[10px] font-bold text-amberdeep transition-all hover:bg-amber hover:text-cream active:scale-90"
+                    >
+                      <X className="size-3 stroke-[2.5]" />
+                      <span>Limpar</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -408,7 +427,7 @@ onConfirmarRemarcacao({
             </div>
 
             <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-{[...TIPOS_CONSULTA, ...TIPOS_EXAME].map((t) => {
+              {[...TIPOS_CONSULTA, ...TIPOS_EXAME].map((t) => {
                 const isSelected = tipos.includes(t);
                 return (
                   <button

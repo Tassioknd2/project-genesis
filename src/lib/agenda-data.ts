@@ -30,6 +30,21 @@ export interface Patient {
   observacoes?: string;
 }
 
+export function isPendencia(a: Appointment): boolean {
+  if (a.status === "falta") return true;
+  if (a.status === "aguardando") return true;
+  if (a.status === "recusado") return true;
+  if (
+    a.pendencia === "sem_resposta" ||
+    a.pendencia === "recusado" ||
+    a.pendencia === "falha_envio" ||
+    a.pendencia === "tardio"
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function calcularIdade(
   dataNascimento: string | Date | undefined,
   fallbackIdade?: number,

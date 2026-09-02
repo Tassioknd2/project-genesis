@@ -16,6 +16,7 @@ import {
   Sun,
   User,
   Waves,
+  X,
 } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -197,15 +198,13 @@ export function NovoAgendamentoWizard({
   const pacienteFinal: Patient | null =
     modo === "novo"
       ? novoNome.trim()
-? {
+        ? {
             id: `p${Date.now()}`,
             nome: novoNome.trim(),
             idade: novoDataNascimento ? calcularIdade(novoDataNascimento) : 0,
             telefone: novoTelefone.trim() || "—",
             convenio: novoConvenio.trim() || "Particular",
-            ...(novoDataNascimento.trim()
-              ? { dataNascimento: novoDataNascimento.trim() }
-              : {}),
+            ...(novoDataNascimento.trim() ? { dataNascimento: novoDataNascimento.trim() } : {}),
           }
         : null
       : pacienteSelecionado;
@@ -334,16 +333,33 @@ export function NovoAgendamentoWizard({
                 <div className="space-y-3">
                   <div className="relative">
                     <Search
-                      className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-inksoft/60"
+                      className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-inksoft/60"
                       aria-hidden
                     />
                     <input
-                      type="search"
+                      type="text"
                       value={busca}
                       onChange={(e) => setBusca(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setBusca("");
+                      }}
                       placeholder="Buscar por nome, telefone..."
-                      className={cn(inputCls, "pl-10")}
+                      className={cn(inputCls, "pl-10", busca ? "pr-24" : "pr-3")}
                     />
+                    {busca && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                        <button
+                          type="button"
+                          aria-label="Apagar tudo da busca"
+                          title="Apagar tudo (ESC)"
+                          onClick={() => setBusca("")}
+                          className="flex h-7 items-center gap-1 rounded-lg border border-amber/50 bg-amber/15 px-2 font-mono text-[10px] font-bold text-amberdeep transition-all hover:bg-amber hover:text-cream active:scale-95"
+                        >
+                          <X className="size-3 stroke-[2.5]" />
+                          <span>Limpar</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">

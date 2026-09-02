@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Search,
   UserX,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -74,7 +75,9 @@ export function VisaoDoMesDialog({
         return {
           data: d,
           iso,
-          itens: agendaDoDia(iso).slice().sort((a, b) => a.hora.localeCompare(b.hora)),
+          itens: agendaDoDia(iso)
+            .slice()
+            .sort((a, b) => a.hora.localeCompare(b.hora)),
         };
       }),
     [diasDoMes, agendaDoDia],
@@ -105,7 +108,9 @@ export function VisaoDoMesDialog({
           if (termo && !a.paciente.nome.toLowerCase().includes(termo)) return false;
           if (filtro === "pendencias") return Boolean(a.pendencia);
           if (filtro === "nao_confirmados")
-            return a.status === "agendado" || a.status === "aguardando" || a.status === "falha_envio";
+            return (
+              a.status === "agendado" || a.status === "aguardando" || a.status === "falha_envio"
+            );
           if (filtro === "faltas") return a.status === "falta" || a.status === "recusado";
           return true;
         }),
@@ -182,11 +187,30 @@ export function VisaoDoMesDialog({
             <div className="relative min-w-[200px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-inksoft" />
               <input
+                type="text"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar paciente no mês"
-                className="h-9 w-full rounded-xl border border-line2 bg-card pl-9 pr-3 text-[13px] text-ink outline-none placeholder:text-inksoft focus:border-amber/60"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setBusca("");
+                }}
+                placeholder="Buscar paciente no mês..."
+                className={cn(
+                  "h-9 w-full rounded-xl border border-line2 bg-card pl-9 text-[13px] text-ink outline-none placeholder:text-inksoft focus:border-amber/60 focus:ring-2 focus:ring-amber/20",
+                  busca ? "pr-22" : "pr-3",
+                )}
               />
+              {busca && (
+                <button
+                  type="button"
+                  aria-label="Apagar tudo da busca"
+                  title="Apagar tudo (ESC)"
+                  onClick={() => setBusca("")}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-6.5 items-center gap-1 rounded-lg border border-amber/50 bg-amber/15 px-2 font-mono text-[10px] font-bold text-amberdeep transition-all hover:bg-amber hover:text-cream active:scale-90"
+                >
+                  <X className="size-3 stroke-[2.5]" />
+                  <span>Limpar</span>
+                </button>
+              )}
             </div>
             {FILTROS.map((f) => (
               <button

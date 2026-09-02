@@ -15,7 +15,7 @@ export function BotaoCaneta({ onClick, rotulo = "Editar", className }: BotaoCane
       onClick={onClick}
       aria-label={rotulo}
       title={rotulo}
-className={cn(
+      className={cn(
         "group/pen flex h-7 items-center rounded-full border border-line bg-card/80 px-1.5 text-[10px] font-bold uppercase tracking-wider text-inksoft/70 transition-all hover:border-amber/50 hover:text-amberdeep active:scale-90",
         className,
       )}

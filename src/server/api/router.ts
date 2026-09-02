@@ -54,7 +54,7 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
     // 2. Agenda
     if (path === "/api/agenda" && method === "GET") {
       const queryParams = Object.fromEntries(url.searchParams.entries());
-const validatedQuery = GetAgendaQuerySchema.parse(queryParams);
+      const validatedQuery = GetAgendaQuerySchema.parse(queryParams);
       const result = await agendaService.getAgenda(semUndefined(validatedQuery));
       return jsonResponse(result);
     }
@@ -125,7 +125,7 @@ const validatedQuery = GetAgendaQuerySchema.parse(queryParams);
 
     // 4. Patients
     if (path === "/api/patients" && method === "GET") {
-const search = url.searchParams.get("search") || undefined;
+      const search = url.searchParams.get("search") || undefined;
       const convenio = url.searchParams.get("convenio") || undefined;
       const patients = await patientService.list(semUndefined({ search, convenio }));
       return jsonResponse(patients);
