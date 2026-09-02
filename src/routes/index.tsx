@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ProtectedRoute } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
 import { DesktopAgendaView, type FiltroAgenda } from "@/components/desktop/DesktopAgendaView";
 import { MobileAgendaView, type FiltroMobile } from "@/components/mobile/MobileAgendaView";
@@ -53,8 +54,16 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AgendaPage,
+  component: ProtectedAgendaPage,
 });
+
+function ProtectedAgendaPage() {
+  return (
+    <ProtectedRoute>
+      <AgendaPage />
+    </ProtectedRoute>
+  );
+}
 
 function AgendaPage() {
   const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));

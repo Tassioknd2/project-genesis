@@ -9,6 +9,7 @@ import {
 } from "../server/domain/types";
 import { DashboardStats } from "../server/services/analytics.service";
 import { PatientDetails } from "../server/services/patient.service";
+import { UserSafeProfile, AuthSessionResponse, UserRole } from "../server/domain/auth.types";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -20,7 +21,50 @@ export interface ApiResponse<T> {
   };
 }
 
+export const AUTH_TOKEN_KEY = "agenda_cardio_token";
+export const AUTH_USER_KEY = "agenda_cardio_user";
+
 class ApiClient {
+  private token: string | null = null;
+
+  constructor() {
+    // Inicializa o token do localStorage se estiver em ambiente de navegador
+    if (typeof window !== "undefined") {
+      try {
+        this.token = localStorage.getItem(AUTH_TOKEN_KEY);
+      } catch {
+        this.token = null;
+      }
+    }
+  }
+
+  public getToken(): string | null {
+    if (!this.token && typeof window !== "undefined") {
+      try {
+        this.token = localStorage.getItem(AUTH_TOKEN_KEY);
+      } catch {
+        this.token = null;
+      }
+    }
+    return this.token;
+  }
+
+  public setToken(token: string | null): void {
+    this.token = token;
+    if (typeof window !== "undefined") {
+      try {
+        if (token) {
+          localStorage.setItem(AUTH_TOKEN_KEY, token);
+        } else {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+          localStorage.removeItem(AUTH_USER_KEY);
+        }
+      } catch {
+        // Ignora erros de storage restrito
+      }
+    }
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
       Accept: "application/json",
@@ -31,6 +75,11 @@ class ApiClient {
       headers["Content-Type"] = "application/json";
     }
 
+    const currentToken = this.getToken();
+    if (currentToken && !headers["Authorization"] && !headers["authorization"]) {
+      headers["Authorization"] = `Bearer ${currentToken}`;
+    }
+
     const response = await fetch(endpoint, {
       ...options,
       headers,
@@ -39,6 +88,10 @@ class ApiClient {
     const json = (await response.json()) as ApiResponse<T>;
 
     if (!response.ok || !json.success) {
+      // Se a sessão expirou ou for inválida (401), limpa credenciais locais
+      if (response.status === 401 && endpoint.startsWith("/api/auth/me")) {
+        this.setToken(null);
+      }
       const errorMsg = json.error?.message || `Erro na requisição HTTP ${response.status}`;
       const err = new Error(errorMsg) as Error & { code?: string; details?: unknown };
       if (json.error?.code !== undefined) err.code = json.error.code;
@@ -47,6 +100,98 @@ class ApiClient {
     }
 
     return json.data as T;
+  }
+
+  // --- Autenticação & Usuários ---
+
+  async login(payload: { email: string; password: string }): Promise<AuthSessionResponse> {
+    const res = await this.request<AuthSessionResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    this.setToken(res.token);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+      } catch {
+        // storage fallback
+      }
+    }
+    return res;
+  }
+
+  async register(payload: {
+    nome: string;
+    email: string;
+    password: string;
+    role?: UserRole;
+    telefone?: string;
+    crm?: string;
+  }): Promise<AuthSessionResponse> {
+    const res = await this.request<AuthSessionResponse>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    this.setToken(res.token);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+      } catch {
+        // storage fallback
+      }
+    }
+    return res;
+  }
+
+  async loginWithGoogle(payload: {
+    credential: string;
+    role?: UserRole;
+  }): Promise<AuthSessionResponse> {
+    const res = await this.request<AuthSessionResponse>("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    this.setToken(res.token);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+      } catch {
+        // storage fallback
+      }
+    }
+    return res;
+  }
+
+  async getMe(): Promise<{ user: UserSafeProfile }> {
+    return this.request<{ user: UserSafeProfile }>("/api/auth/me", {
+      method: "GET",
+    });
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.request<{ message: string }>("/api/auth/logout", {
+        method: "POST",
+      });
+    } catch {
+      // Logout é idempotente
+    } finally {
+      this.setToken(null);
+    }
+  }
+
+  async requestPasswordReset(email: string): Promise<{ message: string; previewToken?: string }> {
+    return this.request<{ message: string; previewToken?: string }>("/api/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
+    });
   }
 
   // --- Agenda & Agendamentos ---

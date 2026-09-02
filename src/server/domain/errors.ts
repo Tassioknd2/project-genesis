@@ -1,5 +1,7 @@
 export type ErrorCode =
   | "VALIDATION_ERROR"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
   | "NOT_FOUND"
   | "CONFLICT"
   | "INVALID_STATE_TRANSITION"
@@ -24,6 +26,20 @@ export class AppError extends Error {
     this.statusCode = statusCode;
     this.details = details;
     Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message = "Credenciais inválidas ou token de autenticação ausente.") {
+    super(message, "UNAUTHORIZED", 401);
+    this.name = "UnauthorizedError";
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = "Você não tem permissão para realizar esta ação.") {
+    super(message, "FORBIDDEN", 403);
+    this.name = "ForbiddenError";
   }
 }
 

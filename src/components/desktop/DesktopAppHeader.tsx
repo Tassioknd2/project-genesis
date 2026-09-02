@@ -7,9 +7,22 @@ import {
   HeartPulse,
   Plus,
   Users,
+  LogOut,
+  User as UserIcon,
+  Stethoscope,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import {
   HOJE_ISO,
@@ -85,6 +98,7 @@ export function DesktopAppHeader({
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
+  const { user, logout } = useAuth();
 
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
@@ -233,6 +247,74 @@ export function DesktopAppHeader({
             <Plus className="size-4 text-amber" />
             <span>Novo agendamento</span>
           </button>
+
+          {/* Perfil do Usuário e Logout */}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  id="user-profile-menu-button"
+                  className="flex items-center gap-2 rounded-xl border border-line2/80 bg-card p-1.5 pr-3 shadow-2xs transition-all hover:border-amber/60 hover:bg-paper active:scale-95"
+                >
+                  <div className="relative flex size-7 items-center justify-center rounded-lg bg-ink text-xs font-bold text-cream">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.nome}
+                        className="size-7 rounded-lg object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      user.nome.substring(0, 2).toUpperCase()
+                    )}
+                    <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-card bg-ok" />
+                  </div>
+                  <div className="text-left leading-tight hidden lg:block">
+                    <div className="text-xs font-bold text-ink max-w-[110px] truncate">
+                      {user.nome}
+                    </div>
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-amberdeep">
+                      {user.role === "medico" ? "Cardiologista" : "Recepção"}
+                    </div>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-1.5">
+                <DropdownMenuLabel className="font-normal px-2 py-1.5">
+                  <div className="text-xs font-bold text-ink">{user.nome}</div>
+                  <div className="text-[11px] text-inksoft truncate">{user.email}</div>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="rounded bg-amber/15 px-1.5 py-0.2 font-mono text-[9px] font-bold uppercase text-amberdeep">
+                      {user.role}
+                    </span>
+                    {user.crm && (
+                      <span className="font-mono text-[9px] text-inksoft">CRM {user.crm}</span>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await logout();
+                    toast.info("Sessão finalizada");
+                  }}
+                  className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-950/30"
+                >
+                  <LogOut className="size-4 mr-2" />
+                  <span>Sair da conta</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link
+              to="/login"
+              className="inline-flex h-9.5 items-center gap-1.5 rounded-xl border border-line2/80 bg-card px-3 font-mono text-xs font-bold uppercase tracking-wider text-ink shadow-2xs hover:border-amber/60 hover:bg-paper hover:text-amberdeep"
+            >
+              <UserIcon className="size-3.5 text-amber" />
+              <span>Entrar</span>
+            </Link>
+          )}
         </div>
       </div>
 

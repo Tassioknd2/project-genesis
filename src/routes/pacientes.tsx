@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ProtectedRoute } from "@/lib/auth-context";
+import { apiClient } from "@/lib/api-client";
 import { AppHeader } from "@/components/AppHeader";
 import { DesktopPacientesView } from "@/components/desktop/DesktopPacientesView";
 import { MobilePacientesView } from "@/components/mobile/MobilePacientesView";
@@ -31,8 +33,16 @@ export const Route = createFileRoute("/pacientes")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: PacientesPage,
+  component: ProtectedPacientesPage,
 });
+
+function ProtectedPacientesPage() {
+  return (
+    <ProtectedRoute>
+      <PacientesPage />
+    </ProtectedRoute>
+  );
+}
 
 function PacientesPage() {
   const [listaPacientes, setListaPacientes] = useState<Patient[]>(() => [...pacientes]);
@@ -42,6 +52,24 @@ function PacientesPage() {
   const [pacienteParaEditar, setPacienteParaEditar] = useState<Patient | null>(null);
   const [wizardAberto, setWizardAberto] = useState(false);
   const [dialogEditarAberto, setDialogEditarAberto] = useState(false);
+
+  // Carrega pacientes do backend autenticado com o token da sessão
+  useEffect(() => {
+    let ativo = true;
+    apiClient
+      .getPatients()
+      .then((remotos) => {
+        if (ativo && remotos && remotos.length > 0) {
+          setListaPacientes(remotos as Patient[]);
+        }
+      })
+      .catch((err) => {
+        console.warn("Uso de pacientes locais ou falha de autorização:", err);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const convenios = useMemo(() => {
     const set = new Set<string>();
@@ -83,7 +111,7 @@ function PacientesPage() {
     setDialogEditarAberto(true);
   }
 
-  function handleSalvarPaciente(pacienteAtualizado: Patient) {
+  async function handleSalvarPaciente(pacienteAtualizado: Patient) {
     setListaPacientes((prev) =>
       prev.map((p) => (p.id === pacienteAtualizado.id ? pacienteAtualizado : p)),
     );
@@ -94,6 +122,12 @@ function PacientesPage() {
       pacientes[idx] = pacienteAtualizado;
     } else {
       pacientes.push(pacienteAtualizado);
+    }
+
+    try {
+      await apiClient.updatePatient(pacienteAtualizado.id, pacienteAtualizado);
+    } catch {
+      // Notifica com tolerância a falhas locais
     }
 
     toast.success(`Cadastro atualizado: ${pacienteAtualizado.nome}`, {
