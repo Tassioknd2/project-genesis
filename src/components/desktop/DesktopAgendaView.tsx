@@ -62,7 +62,7 @@ export interface DesktopAgendaViewProps {
 }
 
 export function DesktopAgendaView({
-  dataSelecionada,
+  dataSelecionada: _dataSelecionada,
   total,
   confirmados,
   faltas,
@@ -92,23 +92,6 @@ export function DesktopAgendaView({
 }: DesktopAgendaViewProps) {
   return (
     <div id="desktop-agenda-root" className="mx-auto max-w-[1240px] px-6 py-8 lg:px-8">
-      {/* Banner do Dia Selecionado Desktop */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2">
-          <span className="size-2 rounded-full bg-amber" />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-inksoft">
-            Atendimento do Dia · Visão Desktop
-          </span>
-        </div>
-        <h2 className="mt-1 text-3xl font-black capitalize tracking-tight text-ink">
-          {dataSelecionada.toLocaleDateString("pt-BR", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
-        </h2>
-      </div>
-
       {/* Indicadores do dia — Linha interativa Desktop */}
       <section
         aria-label="Indicadores do dia"
