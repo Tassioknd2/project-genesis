@@ -120,8 +120,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(
     async (credential: string, role?: UserRole): Promise<UserSafeProfile> => {
       setIsLoading(true);
-      try {
-        const res = await apiClient.loginWithGoogle({ credential, role });
+try {
+        const res = await apiClient.loginWithGoogle(
+          role ? { credential, role } : { credential },
+        );
         setUser(res.user);
         setToken(res.token);
         return res.user;

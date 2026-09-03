@@ -286,9 +286,16 @@ class ApiClient {
     return this.request<PatientDetails>(`/api/patients/${encodeURIComponent(id)}`);
   }
 
-  async createPatient(patient: Omit<Patient, "id">): Promise<Patient> {
+async createPatient(patient: Omit<Patient, "id">): Promise<Patient> {
     return this.request<Patient>("/api/patients", {
       method: "POST",
+      body: JSON.stringify(patient),
+    });
+  }
+
+  async updatePatient(id: string, patient: Partial<Patient>): Promise<Patient> {
+    return this.request<Patient>(`/api/patients/${encodeURIComponent(id)}`, {
+      method: "PUT",
       body: JSON.stringify(patient),
     });
   }
