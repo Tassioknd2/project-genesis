@@ -97,13 +97,13 @@ function CadastroPage() {
 
     setCarregando(true);
     try {
-      const user = await register({
+const user = await register({
         nome: nome.trim(),
         email: email.trim().toLowerCase(),
         password,
         role,
-        telefone: telefone.trim() || undefined,
-        crm: role === "medico" ? crm.trim() : undefined,
+        ...(telefone.trim() ? { telefone: telefone.trim() } : {}),
+        ...(role === "medico" && crm.trim() ? { crm: crm.trim() } : {}),
       });
 
       toast.success("Conta criada com sucesso!", {

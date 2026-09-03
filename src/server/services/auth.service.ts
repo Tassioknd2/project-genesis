@@ -362,8 +362,13 @@ export class AuthService {
   /**
    * Atualização de perfil do usuário logado
    */
-  async updateProfile(userId: string, dto: UpdateProfileDTO): Promise<UserSafeProfile> {
-    const updated = await this.userRepo.update(userId, dto);
+async updateProfile(userId: string, dto: UpdateProfileDTO): Promise<UserSafeProfile> {
+    const updates: Partial<User> = {};
+    if (dto.nome !== undefined) updates.nome = dto.nome;
+    if (dto.telefone !== undefined) updates.telefone = dto.telefone;
+    if (dto.avatarUrl !== undefined) updates.avatarUrl = dto.avatarUrl;
+    if (dto.crm !== undefined) updates.crm = dto.crm;
+    const updated = await this.userRepo.update(userId, updates);
     return this.toSafeProfile(updated);
   }
 }

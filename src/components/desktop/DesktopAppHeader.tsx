@@ -40,11 +40,11 @@ import {
 } from "@/components/NovoAgendamentoWizard";
 
 export interface DesktopAppHeaderProps {
-  selectedDate?: Date;
-  onSelectDate?: (date: Date) => void;
-  onNovoAgendamento?: (draft: NovoAgendamentoDraft) => void;
+  selectedDate?: Date | undefined;
+  onSelectDate?: ((date: Date) => void) | undefined;
+  onNovoAgendamento?: ((draft: NovoAgendamentoDraft) => void) | undefined;
   /** Resolve a agenda de uma data (inclui alterações feitas na sessão). */
-  agendaDoDia?: (iso: string) => Appointment[];
+  agendaDoDia?: ((iso: string) => Appointment[]) | undefined;
 }
 
 const MESES = [

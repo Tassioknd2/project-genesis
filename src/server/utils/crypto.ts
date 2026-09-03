@@ -72,37 +72,42 @@ export async function verifyGoogleCredential(credential: string): Promise<Google
     const jsonPayload = Buffer.from(payloadBase64, "base64").toString("utf-8");
     const payload = JSON.parse(jsonPayload) as Record<string, unknown>;
 
-    // Validações mínimas do payload
-    if (!payload.sub || typeof payload.sub !== "string") {
+// Validações mínimas do payload
+    if (!payload["sub"] || typeof payload["sub"] !== "string") {
       throw new UnauthorizedError("Token do Google não contém identificador de usuário ('sub').");
     }
 
-    if (!payload.email || typeof payload.email !== "string") {
+    if (!payload["email"] || typeof payload["email"] !== "string") {
       throw new UnauthorizedError("Token do Google não contém endereço de e-mail.");
     }
 
     // Valida expiração (exp em segundos)
-    if (typeof payload.exp === "number") {
+    if (typeof payload["exp"] === "number") {
       const nowSeconds = Math.floor(Date.now() / 1000);
-      if (payload.exp < nowSeconds) {
+      if (payload["exp"] < nowSeconds) {
         throw new UnauthorizedError("O token de autenticação do Google expirou.");
       }
     }
 
     // Verifica issuer do Google
-    const iss = payload.iss as string | undefined;
+    const iss = payload["iss"] as string | undefined;
     if (iss && !["accounts.google.com", "https://accounts.google.com"].includes(iss)) {
       throw new UnauthorizedError("Emissor do token Google inválido.");
     }
 
+    const email = (payload["email"] as string).toLowerCase().trim();
     return {
-      sub: payload.sub,
-      email: (payload.email as string).toLowerCase().trim(),
-      email_verified: Boolean(payload.email_verified),
-      name: (payload.name as string) || (payload.email as string).split("@")[0] || "Usuário Google",
-      picture: payload.picture as string | undefined,
-      given_name: payload.given_name as string | undefined,
-      family_name: payload.family_name as string | undefined,
+      sub: payload["sub"] as string,
+      email,
+      email_verified: Boolean(payload["email_verified"]),
+      name: (payload["name"] as string) || email.split("@")[0] || "Usuário Google",
+      ...(payload["picture"] !== undefined ? { picture: payload["picture"] as string } : {}),
+      ...(payload["given_name"] !== undefined
+        ? { given_name: payload["given_name"] as string }
+        : {}),
+      ...(payload["family_name"] !== undefined
+        ? { family_name: payload["family_name"] as string }
+        : {}),
     };
   } catch (error) {
     if (error instanceof UnauthorizedError) {
