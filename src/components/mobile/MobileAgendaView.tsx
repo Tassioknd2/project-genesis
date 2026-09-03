@@ -223,21 +223,7 @@ export function MobileAgendaView({
       </section>
 
       {/* Categoria Exames / Consultas Mobile */}
-      <section className="mb-3.5 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setCategoria((c) => (c === "exame" ? null : "exame"))}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-xl border p-2 text-xs font-bold transition-all",
-            categoria === "exame"
-              ? "border-ink bg-ink text-cream"
-              : "border-line2 bg-card text-ink",
-          )}
-        >
-          <FlaskConical className="size-3.5 text-amber" />
-          <span>Exames ({totalExames})</span>
-        </button>
-
+<section className="mb-3.5 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
@@ -250,6 +236,20 @@ export function MobileAgendaView({
         >
           <Stethoscope className="size-3.5 text-amber" />
           <span>Consultas ({totalConsultas})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoria((c) => (c === "exame" ? null : "exame"))}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-xl border p-2 text-xs font-bold transition-all",
+            categoria === "exame"
+              ? "border-ink bg-ink text-cream"
+              : "border-line2 bg-card text-ink",
+          )}
+        >
+          <FlaskConical className="size-3.5 text-amber" />
+          <span>Exames ({totalExames})</span>
         </button>
       </section>
 

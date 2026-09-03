@@ -292,6 +292,35 @@ export function DesktopAgendaView({
         style={{ animationDelay: "320ms" }}
       >
         <div role="group" aria-label="Categoria" className="grid grid-cols-2 gap-3">
+<button
+            type="button"
+            aria-pressed={categoria === "consulta"}
+            onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
+            className={cn(
+              "flex items-center justify-center gap-3 rounded-2xl border p-3.5 shadow-2xs transition-all duration-200 active:scale-[0.98]",
+              categoria === "consulta"
+                ? "border-ink bg-ink text-cream shadow-xs"
+                : "border-line2 bg-card text-ink hover:border-amber/40 hover:bg-amber/5",
+            )}
+          >
+            <Stethoscope
+              className={cn(
+                "size-4.5 shrink-0 transition-colors",
+                categoria === "consulta" ? "text-amber" : "text-inksoft",
+              )}
+              aria-hidden
+            />
+            <span className="font-mono text-xs font-black uppercase tracking-wider">Consultas</span>
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors",
+                categoria === "consulta" ? "bg-amber/20 text-amber" : "bg-mutbg text-inksoft",
+              )}
+            >
+              {totalConsultas} {totalConsultas === 1 ? "agendada" : "agendadas"}
+            </span>
+          </button>
+
           <button
             type="button"
             aria-pressed={categoria === "exame"}
@@ -318,35 +347,6 @@ export function DesktopAgendaView({
               )}
             >
               {totalExames} {totalExames === 1 ? "agendado" : "agendados"}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            aria-pressed={categoria === "consulta"}
-            onClick={() => setCategoria((c) => (c === "consulta" ? null : "consulta"))}
-            className={cn(
-              "flex items-center justify-center gap-3 rounded-2xl border p-3.5 shadow-2xs transition-all duration-200 active:scale-[0.98]",
-              categoria === "consulta"
-                ? "border-ink bg-ink text-cream shadow-xs"
-                : "border-line2 bg-card text-ink hover:border-amber/40 hover:bg-amber/5",
-            )}
-          >
-            <Stethoscope
-              className={cn(
-                "size-4.5 shrink-0 transition-colors",
-                categoria === "consulta" ? "text-amber" : "text-inksoft",
-              )}
-              aria-hidden
-            />
-            <span className="font-mono text-xs font-black uppercase tracking-wider">Consultas</span>
-            <span
-              className={cn(
-                "rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold tabular-nums transition-colors",
-                categoria === "consulta" ? "bg-amber/20 text-amber" : "bg-mutbg text-inksoft",
-              )}
-            >
-              {totalConsultas} {totalConsultas === 1 ? "agendada" : "agendadas"}
             </span>
           </button>
         </div>
