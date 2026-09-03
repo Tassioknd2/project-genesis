@@ -98,7 +98,7 @@ export async function logSensitiveDataAccess(
 ): Promise<void> {
 await auditLogRepository.create({
     entidade,
-    ...(entidadeId ? { entidadeId } : {}),
+    entidadeId: entidadeId ?? "",
     acao,
     detalhes,
     autor: `${user.nome} (${user.role}${user.crm ? ` - CRM ${user.crm}` : ""})`,
