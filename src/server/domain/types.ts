@@ -27,11 +27,11 @@ export interface Patient {
   idade: number;
   telefone: string;
   convenio: string;
-  cpf?: string;
-  email?: string;
-  ultimaVisita?: string;
-  observacoes?: string;
-  criadoEm?: string;
+  cpf?: string | undefined;
+  email?: string | undefined;
+  ultimaVisita?: string | undefined;
+  observacoes?: string | undefined;
+  criadoEm?: string | undefined;
 }
 
 export type EtiquetaCor = "ambar" | "verde" | "azul" | "vermelho" | "roxo" | "cinza";
@@ -49,13 +49,13 @@ export interface Appointment {
   duracaoMin: number;
   paciente: Patient;
   tipo: TipoAtendimento;
-  tipos?: TipoAtendimento[];
+  tipos?: TipoAtendimento[] | undefined;
   medico: string;
   status: AppointmentStatus;
   pendencia?: PendenciaType | undefined;
   observacoes?: string | undefined;
-  notas?: string[];
-  etiquetas?: Etiqueta[];
+  notas?: string[] | undefined;
+  etiquetas?: Etiqueta[] | undefined;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -65,9 +65,9 @@ export interface AuditLog {
   entidade: "appointment" | "patient" | "whatsapp";
   entidadeId: string;
   acao: string;
-  deStatus?: AppointmentStatus;
-  paraStatus?: AppointmentStatus;
-  detalhes?: string;
+  deStatus?: AppointmentStatus | undefined;
+  paraStatus?: AppointmentStatus | undefined;
+  detalhes?: string | undefined;
   autor: string;
   criadoEm: string;
 }

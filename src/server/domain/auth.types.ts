@@ -21,7 +21,7 @@ export interface User {
   avatarUrl?: string | undefined;
   telefone?: string | undefined;
   crm?: string | undefined;
-  emailVerificado?: boolean;
+  emailVerificado?: boolean | undefined;
   codigoVerificacaoEmail?: EmailVerificationCode | undefined;
   ultimoLoginEm?: string | undefined;
   criadoEm: string;
@@ -60,7 +60,7 @@ export interface GoogleTokenPayload {
   email: string;
   email_verified: boolean;
   name: string;
-  picture?: string;
-  given_name?: string;
-  family_name?: string;
+  picture?: string | undefined;
+  given_name?: string | undefined;
+  family_name?: string | undefined;
 }
