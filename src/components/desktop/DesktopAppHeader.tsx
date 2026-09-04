@@ -231,7 +231,7 @@ export function DesktopAppHeader({
                 : "border-line2/80 bg-card text-ink shadow-2xs hover:border-amber/60 hover:bg-paper hover:text-amberdeep",
             )}
           >
-            <Calendar
+            <CalendarIcon
               className={cn(
                 "size-4 shrink-0 transition-colors",
                 pathname === "/agenda" ? "text-amber" : "text-amberdeep",
