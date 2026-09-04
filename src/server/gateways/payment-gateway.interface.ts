@@ -9,12 +9,12 @@
 export type GatewayPaymentMethod = "cartao" | "pix" | "boleto";
 
 export interface GatewayCustomer {
-  id?: string;
+  id?: string | undefined;
   userId: string;
   nome: string;
   email: string;
-  cpfCnpj?: string;
-  telefone?: string;
+  cpfCnpj?: string | undefined;
+  telefone?: string | undefined;
 }
 
 export interface GatewayCardData {
@@ -31,9 +31,9 @@ export interface GatewayCreateSubscriptionParams {
   valorMensal: number;
   billingCycle: "mensal" | "anual";
   metodoPagamento: GatewayPaymentMethod;
-  cartao?: GatewayCardData;
-  paymentToken?: string; // Token gerado pelo SDK client-side (Stripe Elements / MercadoPago.js / Asaas)
-  metadata?: Record<string, string>;
+  cartao?: GatewayCardData | undefined;
+  paymentToken?: string | undefined; // Token gerado pelo SDK client-side (Stripe Elements / MercadoPago.js / Asaas)
+  metadata?: Record<string, string> | undefined;
 }
 
 export interface GatewaySubscriptionResult {
@@ -43,16 +43,16 @@ export interface GatewaySubscriptionResult {
   status: "ativa" | "pendente" | "cancelada";
   transacaoId: string;
   valorCobrado: number;
-  proximaCobranca?: string;
+  proximaCobranca?: string | undefined;
   // Campos específicos para PIX Instantâneo
-  pixCopiaECola?: string;
-  pixQrCodeUrl?: string;
+  pixCopiaECola?: string | undefined;
+  pixQrCodeUrl?: string | undefined;
   // Campos específicos para Boleto Bancário
-  boletoCodigoBarras?: string;
-  boletoUrlPdf?: string;
+  boletoCodigoBarras?: string | undefined;
+  boletoUrlPdf?: string | undefined;
   // Metadados do cartão de crédito
-  cartaoBandeira?: string;
-  cartaoUltimosDigitos?: string;
+  cartaoBandeira?: string | undefined;
+  cartaoUltimosDigitos?: string | undefined;
 }
 
 export type WebhookEventType =
@@ -67,13 +67,13 @@ export interface NormalizedWebhookEvent {
   gatewayProvider: string;
   eventType: WebhookEventType;
   originalEventName: string;
-  gatewaySubscriptionId?: string;
-  gatewayCustomerId?: string;
-  gatewayInvoiceId?: string;
-  valor?: number;
+  gatewaySubscriptionId?: string | undefined;
+  gatewayCustomerId?: string | undefined;
+  gatewayInvoiceId?: string | undefined;
+  valor?: number | undefined;
   dataEvento: string;
-  faturaUrlPdf?: string;
-  detalhes?: string;
+  faturaUrlPdf?: string | undefined;
+  detalhes?: string | undefined;
   rawPayload: unknown;
 }
 

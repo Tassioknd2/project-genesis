@@ -41,19 +41,19 @@ export interface Subscription {
   precoMensal: number;
   inicioPeriodo: string;
   fimPeriodo: string;
-  metodoPagamento?: "cartao" | "pix" | "boleto";
-  cartaoUltimosDigitos?: string;
+  metodoPagamento?: "cartao" | "pix" | "boleto" | undefined;
+  cartaoUltimosDigitos?: string | undefined;
   cancelarAoFimDoPeriodo: boolean;
   criadoEm: string;
   atualizadoEm: string;
   // Integração com Gateway de Pagamento
-  gatewayProvider?: string;
-  gatewayCustomerId?: string;
-  gatewaySubscriptionId?: string;
-  gatewayPaymentMethodId?: string;
-  pixCopiaECola?: string;
-  pixQrCodeUrl?: string;
-  ultimaTransacaoId?: string;
+  gatewayProvider?: string | undefined;
+  gatewayCustomerId?: string | undefined;
+  gatewaySubscriptionId?: string | undefined;
+  gatewayPaymentMethodId?: string | undefined;
+  pixCopiaECola?: string | undefined;
+  pixQrCodeUrl?: string | undefined;
+  ultimaTransacaoId?: string | undefined;
 }
 
 export interface Invoice {
@@ -66,11 +66,11 @@ export interface Invoice {
   metodoPagamento: "cartao" | "pix" | "boleto";
   dataEmissao: string;
   dataVencimento: string;
-  dataPagamento?: string;
-  urlPdfRecibo?: string;
-  pixCopiaECola?: string;
-  gatewayInvoiceId?: string;
-  cartaoUltimosDigitos?: string;
+  dataPagamento?: string | undefined;
+  urlPdfRecibo?: string | undefined;
+  pixCopiaECola?: string | undefined;
+  gatewayInvoiceId?: string | undefined;
+  cartaoUltimosDigitos?: string | undefined;
 }
 
 export interface Profile {
@@ -92,11 +92,11 @@ export interface Profile {
 
 export interface CheckoutRequestDTO {
   planId: PlanId;
-  billingCycle?: BillingCycle;
-  perfisUsuario?: number;
+  billingCycle?: BillingCycle | undefined;
+  perfisUsuario?: number | undefined;
   metodoPagamento: "cartao" | "pix" | "boleto";
-  paymentToken?: string; // Token gerado pelo SDK do Gateway no client-side
-  cpfCnpj?: string; // CPF/CNPJ do assinante exigido por gateways no Brasil
+  paymentToken?: string | undefined; // Token gerado pelo SDK do Gateway no client-side
+  cpfCnpj?: string | undefined; // CPF/CNPJ do assinante exigido por gateways no Brasil
   cartao?: {
     numero: string;
     nomeTitular: string;
@@ -109,23 +109,23 @@ export interface CreateProfileDTO {
   nome: string;
   email: string;
   role: ProfileRole;
-  tipo?: ProfileType;
-  crm?: string;
-  avatarColor?: string;
-  avatarIcon?: string;
-  avatarUrl?: string;
-  pin?: string;
+  tipo?: ProfileType | undefined;
+  crm?: string | undefined;
+  avatarColor?: string | undefined;
+  avatarIcon?: string | undefined;
+  avatarUrl?: string | undefined;
+  pin?: string | undefined;
 }
 
 export interface UpdateProfileDTO {
-  nome?: string;
-  email?: string;
-  role?: ProfileRole;
-  crm?: string;
-  avatarColor?: string;
-  avatarIcon?: string;
-  avatarUrl?: string;
-  pin?: string;
+  nome?: string | undefined;
+  email?: string | undefined;
+  role?: ProfileRole | undefined;
+  crm?: string | undefined;
+  avatarColor?: string | undefined;
+  avatarIcon?: string | undefined;
+  avatarUrl?: string | undefined;
+  pin?: string | undefined;
 }
 
 export interface SubscriptionSummaryResponse {
