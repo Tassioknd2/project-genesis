@@ -1,6 +1,14 @@
 import { jsonResponse, handleApiError } from "./error-handler";
 import { handleAuthApiRequest } from "./auth.router";
-import { requireAuth, isPublicApiRoute, logSensitiveDataAccess, requireRole } from "./auth-guard";
+import { handleSubscriptionApiRequest } from "./subscription.router";
+import {
+  requireAuth,
+  isPublicApiRoute,
+  logSensitiveDataAccess,
+  requireRole,
+  requireActiveSubscription,
+  requireFeature,
+} from "./auth-guard";
 import {
   CreateAppointmentSchema,
   UpdateAppointmentStatusSchema,
@@ -59,6 +67,10 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
       if (authResponse) {
         return authResponse;
       }
+      const subResponse = await handleSubscriptionApiRequest(request);
+      if (subResponse) {
+        return subResponse;
+      }
     }
 
     // =========================================================================
@@ -77,7 +89,33 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
       }
     }
 
-    // 4. Agenda e Agendamentos Clínicos (Dados Sensíveis de Pacientes)
+    // 4. Rotas de Assinaturas, Planos e Perfis estilo Netflix (/api/subscriptions/*, /api/profiles/*)
+    if (path.startsWith("/api/subscriptions") || path.startsWith("/api/profiles")) {
+      const subResponse = await handleSubscriptionApiRequest(request);
+      if (subResponse) {
+        return subResponse;
+      }
+    }
+
+    // 5. Rotas do Módulo CRM (Acesso condicionado ao Plano Avançado)
+    if (path.startsWith("/api/crm")) {
+      await requireActiveSubscription(user.id);
+      await requireFeature(user.id, "crm");
+      return jsonResponse({
+        status: "ok",
+        modulo: "CRM Administrativo",
+        mensagem: "Módulo CRM liberado para o seu plano.",
+      });
+    }
+
+    // =========================================================================
+    // BARREIRA DE ASSINATURA ATIVA (MOTOR DE ACESSO DO BACK-END)
+    // Exige que a conta possua uma assinatura com status 'ativa' ou 'trial'
+    // antes de liberar manipulação de agenda, prontuários ou disparo de WhatsApp.
+    // =========================================================================
+    await requireActiveSubscription(user.id);
+
+    // 6. Agenda e Agendamentos Clínicos (Dados Sensíveis de Pacientes)
     if (path === "/api/agenda" && method === "GET") {
       const queryParams = Object.fromEntries(url.searchParams.entries());
       const validatedQuery = GetAgendaQuerySchema.parse(queryParams);

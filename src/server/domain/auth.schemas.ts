@@ -65,3 +65,12 @@ export const UpdateProfileSchema = z.object({
   avatarUrl: z.string().url("URL de avatar inválida").optional().or(z.literal("")),
   crm: z.string().trim().optional(),
 });
+
+export const VerifyEmailSchema = z.object({
+  code: z.string().trim().min(4, "O código de verificação deve ter 6 dígitos").max(10),
+  email: z.string().trim().email("E-mail com formato inválido").optional(),
+});
+
+export const SendVerificationCodeSchema = z.object({
+  email: z.string().trim().email("E-mail com formato inválido").optional(),
+});

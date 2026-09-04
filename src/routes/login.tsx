@@ -85,7 +85,21 @@ function LoginPage() {
         description: `Sessão iniciada com sucesso como ${user.role}.`,
       });
 
-      router.navigate({ to: "/" });
+      // Verifica se o usuário contratou plano multi-perfis ou se entra direto na Agenda
+      try {
+        const sub = await apiClient.getSubscriptionSummary();
+        const isMultiPerfil =
+          sub?.plan?.permiteMultiplosPerfis === true &&
+          (sub?.subscription?.totalPerfisPermitidos ?? 1) > 1;
+
+        if (isMultiPerfil) {
+          router.navigate({ to: "/perfis" });
+        } else {
+          router.navigate({ to: "/agenda" });
+        }
+      } catch {
+        router.navigate({ to: "/agenda" });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao realizar login";
       setErro(msg);
@@ -304,7 +318,7 @@ function LoginPage() {
             <GoogleSignInButton
               id="btn-google-login"
               text="Entrar com o Google"
-              onSuccess={() => router.navigate({ to: "/" })}
+              onSuccess={() => router.navigate({ to: "/agenda" })}
             />
 
             {/* Acesso Rápido para Avaliação e Demonstração */}

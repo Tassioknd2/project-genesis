@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { HeartPulse, LogOut, User as UserIcon } from "lucide-react";
+import { HeartPulse, LogOut, User as UserIcon, Users, CreditCard } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -20,7 +20,7 @@ export interface MobileAppHeaderProps {
 }
 
 export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
-  const { user, logout } = useAuth();
+  const { user, logout, currentProfile } = useAuth();
 
   return (
     <header
@@ -50,9 +50,16 @@ export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
                 <button
                   type="button"
                   aria-label="Menu do Usuário"
-                  className="flex size-8 items-center justify-center rounded-lg border border-line2/80 bg-card font-mono text-[11px] font-bold text-ink shadow-2xs active:scale-95"
+                  style={{
+                    backgroundColor: currentProfile?.avatarColor || undefined,
+                  }}
+                  className={`flex size-8 items-center justify-center rounded-lg border border-line2/80 font-mono text-[11px] font-bold shadow-2xs active:scale-95 ${
+                    currentProfile?.avatarColor ? "text-white" : "bg-card text-ink"
+                  }`}
                 >
-                  {user.avatarUrl ? (
+                  {currentProfile ? (
+                    currentProfile.nome.substring(0, 2).toUpperCase()
+                  ) : user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
                       alt={user.nome}
@@ -64,17 +71,58 @@ export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 p-1.5">
-                <DropdownMenuLabel className="font-normal px-2 py-1.5">
-                  <div className="text-xs font-bold text-ink truncate">{user.nome}</div>
-                  <div className="text-[10px] text-inksoft truncate">{user.email}</div>
-                  <div className="mt-1">
+              <DropdownMenuContent align="end" className="w-56 p-1.5">
+                <DropdownMenuLabel className="font-normal px-2 py-1.5 bg-paper/60 rounded-lg mb-1">
+                  <div className="text-xs font-bold text-ink truncate">
+                    {currentProfile?.nome || user.nome}
+                  </div>
+                  <div className="text-[10px] text-inksoft truncate">
+                    {currentProfile?.email || user.email}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1">
                     <span className="rounded bg-amber/15 px-1.5 py-0.2 font-mono text-[9px] font-bold uppercase text-amberdeep">
-                      {user.role}
+                      {currentProfile?.role || user.role}
                     </span>
+                    {(currentProfile?.crm || user.crm) && (
+                      <span className="font-mono text-[9px] text-inksoft">
+                        CRM {currentProfile?.crm || user.crm}
+                      </span>
+                    )}
                   </div>
                 </DropdownMenuLabel>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/perfis"
+                    className="cursor-pointer flex items-center gap-2 px-2 py-2 text-xs font-medium text-ink hover:bg-paper rounded-md"
+                  >
+                    <Users className="size-4 text-amberdeep" />
+                    <span>Trocar Perfil (Netflix)</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/assinatura"
+                    className="cursor-pointer flex items-center gap-2 px-2 py-2 text-xs font-medium text-ink hover:bg-paper rounded-md"
+                  >
+                    <CreditCard className="size-4 text-amberdeep" />
+                    <span>Aba de Assinatura</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/planos"
+                    className="cursor-pointer flex items-center gap-2 px-2 py-2 text-xs font-medium text-ink hover:bg-paper rounded-md"
+                  >
+                    <CreditCard className="size-4 text-emerald-600" />
+                    <span>Planos & Upgrade</span>
+                  </Link>
+                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onClick={async () => {
                     await logout();

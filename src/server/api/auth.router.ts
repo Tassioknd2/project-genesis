@@ -99,7 +99,51 @@ export async function handleAuthApiRequest(request: Request): Promise<Response |
     return jsonResponse(result, 200);
   }
 
-  // 9. Encerramento de Sessão (POST /api/auth/logout)
+  // 9. Envio/Reenvio de Código de Verificação de E-mail (POST /api/auth/send-verification-code)
+  if (path === "/api/auth/send-verification-code" && method === "POST") {
+    let identifier: string | undefined;
+    try {
+      const user = await requireAuth(request);
+      identifier = user.id;
+    } catch {
+      // Não autenticado: tenta extrair e-mail do body
+      const body = await request.json().catch(() => ({}));
+      identifier = body.email;
+    }
+
+    if (!identifier) {
+      return jsonResponse(
+        { message: "Informe o e-mail cadastrado ou faça login para reenviar o código." },
+        400,
+      );
+    }
+
+    const result = await authService.sendVerificationCode(identifier);
+    return jsonResponse(result, 200);
+  }
+
+  // 10. Validação do Código de Verificação de E-mail (POST /api/auth/verify-email)
+  if (path === "/api/auth/verify-email" && method === "POST") {
+    const body = await request.json();
+    const code = body.code || "";
+    let identifier: string | undefined = body.email;
+
+    try {
+      const user = await requireAuth(request);
+      identifier = user.id;
+    } catch {
+      // Usa identifier do body
+    }
+
+    if (!identifier) {
+      return jsonResponse({ message: "Informe o e-mail cadastrado para verificar a conta." }, 400);
+    }
+
+    const result = await authService.verifyEmailCode(identifier, code);
+    return jsonResponse(result, 200);
+  }
+
+  // 11. Encerramento de Sessão (POST /api/auth/logout)
   if (path === "/api/auth/logout" && method === "POST") {
     try {
       const token = extractBearerToken(request);

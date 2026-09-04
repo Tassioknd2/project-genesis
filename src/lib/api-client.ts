@@ -10,6 +10,16 @@ import {
 import { DashboardStats } from "../server/services/analytics.service";
 import { PatientDetails } from "../server/services/patient.service";
 import { UserSafeProfile, AuthSessionResponse, UserRole } from "../server/domain/auth.types";
+import {
+  PlanDefinition,
+  SubscriptionSummaryResponse,
+  Subscription,
+  Profile,
+  CheckoutRequestDTO,
+  CreateProfileDTO,
+  UpdateProfileDTO,
+  Invoice,
+} from "../server/domain/subscription.types";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -194,6 +204,39 @@ class ApiClient {
     });
   }
 
+  async sendVerificationCode(
+    email?: string,
+  ): Promise<{ success: boolean; message: string; previewCode?: string }> {
+    return this.request<{ success: boolean; message: string; previewCode?: string }>(
+      "/api/auth/send-verification-code",
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      },
+    );
+  }
+
+  async verifyEmail(
+    code: string,
+    email?: string,
+  ): Promise<{ success: boolean; user: UserSafeProfile; message: string }> {
+    const res = await this.request<{ success: boolean; user: UserSafeProfile; message: string }>(
+      "/api/auth/verify-email",
+      {
+        method: "POST",
+        body: JSON.stringify({ code, email }),
+      },
+    );
+    if (res.user && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+      } catch {
+        // fallback
+      }
+    }
+    return res;
+  }
+
   // --- Agenda & Agendamentos ---
 
   async getAgenda(query?: {
@@ -340,6 +383,86 @@ async createPatient(patient: Omit<Patient, "id">): Promise<Patient> {
 
   async getAuditLogs(limit = 50): Promise<AuditLog[]> {
     return this.request<AuditLog[]>(`/api/audit-logs?limit=${limit}`);
+  }
+
+  // --- Planos e Assinaturas (O Motor de Monetização) ---
+
+  async getPlans(): Promise<PlanDefinition[]> {
+    const res = await this.request<{ plans: PlanDefinition[] }>("/api/plans");
+    return res.plans;
+  }
+
+  async getSubscriptionSummary(): Promise<SubscriptionSummaryResponse> {
+    return this.request<SubscriptionSummaryResponse>("/api/subscriptions/my");
+  }
+
+  async getInvoices(): Promise<Invoice[]> {
+    const res = await this.request<{ invoices: Invoice[] }>("/api/subscriptions/invoices");
+    return res.invoices;
+  }
+
+  async checkout(data: CheckoutRequestDTO): Promise<{
+    subscription: Subscription;
+    message: string;
+    transacaoId: string;
+  }> {
+    return this.request<{
+      subscription: Subscription;
+      message: string;
+      transacaoId: string;
+    }>("/api/subscriptions/checkout", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async cancelSubscription(): Promise<{ message: string; subscription: Subscription }> {
+    return this.request<{ message: string; subscription: Subscription }>(
+      "/api/subscriptions/cancel",
+      {
+        method: "POST",
+      },
+    );
+  }
+
+  // --- Múltiplos Perfis (Estilo Netflix) ---
+
+  async getProfiles(): Promise<Profile[]> {
+    const res = await this.request<{ profiles: Profile[] }>("/api/profiles");
+    return res.profiles;
+  }
+
+  async createProfile(data: CreateProfileDTO): Promise<Profile> {
+    const res = await this.request<{ profile: Profile }>("/api/profiles", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return res.profile;
+  }
+
+  async updateProfile(id: string, data: UpdateProfileDTO): Promise<Profile> {
+    const res = await this.request<{ profile: Profile }>(`/api/profiles/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return res.profile;
+  }
+
+  async deleteProfile(id: string): Promise<void> {
+    await this.request<{ message: string }>(`/api/profiles/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async selectProfile(id: string, pin?: string): Promise<Profile> {
+    const res = await this.request<{ profile: Profile; message: string }>(
+      `/api/profiles/${id}/select`,
+      {
+        method: "POST",
+        body: JSON.stringify({ pin }),
+      },
+    );
+    return res.profile;
   }
 }
 

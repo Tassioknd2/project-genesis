@@ -4,6 +4,11 @@ export type UserStatus = "ativo" | "inativo" | "bloqueado";
 
 export type AuthProvider = "local" | "google";
 
+export interface EmailVerificationCode {
+  codigo: string;
+  expiraEm: string;
+}
+
 export interface User {
   id: string;
   nome: string;
@@ -16,12 +21,14 @@ export interface User {
   avatarUrl?: string | undefined;
   telefone?: string | undefined;
   crm?: string | undefined;
+  emailVerificado?: boolean;
+  codigoVerificacaoEmail?: EmailVerificationCode | undefined;
   ultimoLoginEm?: string | undefined;
   criadoEm: string;
   atualizadoEm: string;
 }
 
-export type UserSafeProfile = Omit<User, "passwordHash">;
+export type UserSafeProfile = Omit<User, "passwordHash" | "codigoVerificacaoEmail">;
 
 export interface SessionToken {
   id: string;

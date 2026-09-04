@@ -83,7 +83,56 @@ export function isPublicApiRoute(pathname: string, method: string): boolean {
     return true;
   }
 
+  // 3. Catálogo público de planos e webhook de gateway de pagamento
+  if (pathname === "/api/plans" && upperMethod === "GET") {
+    return true;
+  }
+  if (pathname === "/api/subscriptions/webhook" && upperMethod === "POST") {
+    return true;
+  }
+
   return false;
+}
+
+/**
+ * Valida se a conta assinante possui uma assinatura ativa ou em período de testes válido.
+ * Bloqueia o acesso a funções do sistema caso a assinatura esteja cancelada, vencida ou inativa.
+ */
+export async function requireActiveSubscription(userId: string): Promise<void> {
+  const { subscriptionRepository } = await import("../repositories/subscription.repository");
+  const sub = await subscriptionRepository.findByUserId(userId);
+
+  if (!sub) {
+    throw new ForbiddenError(
+      "Nenhuma assinatura ativa encontrada para esta conta. Selecione um dos nossos planos para acessar o sistema.",
+    );
+  }
+
+  if (sub.status === "cancelada" || sub.status === "atrasada") {
+    throw new ForbiddenError(
+      `Sua assinatura encontra-se com status '${sub.status}'. Regularize sua fatura ou selecione um novo plano para continuar utilizando os recursos da clínica.`,
+    );
+  }
+}
+
+/**
+ * Valida se o plano atual da assinatura inclui uma determinada funcionalidade (ex: 'crm').
+ */
+export async function requireFeature(userId: string, feature: string): Promise<void> {
+  const { subscriptionRepository } = await import("../repositories/subscription.repository");
+  const { AVAILABLE_PLANS } = await import("../domain/plans");
+
+  const sub = await subscriptionRepository.findByUserId(userId);
+  if (!sub) {
+    throw new ForbiddenError("Assinatura não encontrada.");
+  }
+
+  const plan = AVAILABLE_PLANS[sub.planId];
+  if (!plan || !plan.features.includes(feature)) {
+    throw new ForbiddenError(
+      `A funcionalidade '${feature}' não está inclusa no seu plano atual (${plan?.nome || "Desconhecido"}). Faça upgrade para o Plano Avançado.`,
+    );
+  }
 }
 
 /**

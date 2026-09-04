@@ -348,7 +348,7 @@ export function DesktopPacientesView({
       {/* Rodapé Desktop */}
       <footer className="mt-12 flex items-center justify-between border-t border-line2/40 py-8">
         <Link
-          to="/"
+          to="/agenda"
           className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-inksoft transition-colors hover:text-amber"
         >
           ← Voltar à agenda do dia

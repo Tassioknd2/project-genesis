@@ -1,6 +1,6 @@
 {
   "name": "Agenda Cardio",
-  "description": "Smart medical agenda and patient management system for cardiology clinics with WhatsApp confirmations",
+  "description": "Smart medical agenda, multi-profile team management (Netflix-style), and subscription plans for cardiology clinics",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

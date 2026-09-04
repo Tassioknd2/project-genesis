@@ -2,13 +2,20 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { useRouter } from "@tanstack/react-router";
 import { apiClient, AUTH_TOKEN_KEY, AUTH_USER_KEY } from "./api-client";
 import { UserSafeProfile, UserRole } from "../server/domain/auth.types";
+import { Profile, SubscriptionSummaryResponse } from "../server/domain/subscription.types";
 import { HeartPulse } from "lucide-react";
+
+export const AUTH_PROFILE_KEY = "agenda_cardio_active_profile";
 
 interface AuthContextType {
   user: UserSafeProfile | null;
   token: string | null;
+  currentProfile: Profile | null;
+  subscriptionSummary: SubscriptionSummaryResponse | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  setCurrentProfile: (profile: Profile | null) => void;
+  refreshSubscription: () => Promise<SubscriptionSummaryResponse | null>;
   login: (credentials: { email: string; password: string }) => Promise<UserSafeProfile>;
   register: (data: {
     nome: string;
@@ -19,6 +26,13 @@ interface AuthContextType {
     crm?: string;
   }) => Promise<UserSafeProfile>;
   loginWithGoogle: (credential: string, role?: UserRole) => Promise<UserSafeProfile>;
+  sendVerificationCode: (
+    email?: string,
+  ) => Promise<{ success: boolean; message: string; previewCode?: string }>;
+  verifyEmail: (
+    code: string,
+    email?: string,
+  ) => Promise<{ success: boolean; user: UserSafeProfile; message: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -45,7 +59,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   });
 
+  const [currentProfile, setCurrentProfileState] = useState<Profile | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(AUTH_PROFILE_KEY);
+        if (stored) return JSON.parse(stored) as Profile;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [subscriptionSummary, setSubscriptionSummary] =
+    useState<SubscriptionSummaryResponse | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const setCurrentProfile = useCallback((profile: Profile | null) => {
+    setCurrentProfileState(profile);
+    if (typeof window !== "undefined") {
+      try {
+        if (profile) {
+          localStorage.setItem(AUTH_PROFILE_KEY, JSON.stringify(profile));
+        } else {
+          localStorage.removeItem(AUTH_PROFILE_KEY);
+        }
+      } catch {
+        // storage fallback
+      }
+    }
+  }, []);
+
+  const refreshSubscription = useCallback(async () => {
+    if (!apiClient.getToken()) {
+      setSubscriptionSummary(null);
+      return null;
+    }
+    try {
+      const summary = await apiClient.getSubscriptionSummary();
+      setSubscriptionSummary(summary);
+      return summary;
+    } catch {
+      return null;
+    }
+  }, []);
 
   // Validação da sessão com o backend na inicialização
   const refreshUser = useCallback(async () => {
@@ -53,6 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!currentToken) {
       setUser(null);
       setToken(null);
+      setCurrentProfileState(null);
+      setSubscriptionSummary(null);
       setIsLoading(false);
       return;
     }
@@ -66,15 +126,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // storage fallback
       }
+      // Carrega resumo da assinatura e perfis para garantir estado consistente
+      const [sub, profiles] = await Promise.all([
+        apiClient.getSubscriptionSummary().catch(() => null),
+        apiClient.getProfiles().catch(() => []),
+      ]);
+
+      if (sub) {
+        setSubscriptionSummary(sub);
+      }
+
+      // Se não houver perfil selecionado e não for multi-perfil contratado, seleciona o titular automaticamente
+      if (!currentProfile && profiles && profiles.length > 0) {
+        const isMultiPerfil =
+          sub?.plan?.permiteMultiplosPerfis === true &&
+          (sub?.subscription?.totalPerfisPermitidos ?? 1) > 1;
+
+        if (!isMultiPerfil || profiles.length === 1) {
+          const primary = profiles.find((p) => p.isPrimary) || profiles[0];
+          setCurrentProfileState(primary);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(AUTH_PROFILE_KEY, JSON.stringify(primary));
+            } catch {
+              // fallback
+            }
+          }
+        }
+      }
     } catch (error) {
       console.warn("Sessão inválida ou expirada:", error);
       apiClient.setToken(null);
       setUser(null);
       setToken(null);
+      setCurrentProfileState(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentProfile]);
 
   useEffect(() => {
     refreshUser();
@@ -87,12 +176,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await apiClient.login(credentials);
         setUser(res.user);
         setToken(res.token);
+
+        // Auto-seleciona perfil do titular para planos normais
+        try {
+          const [sub, profiles] = await Promise.all([
+            apiClient.getSubscriptionSummary(),
+            apiClient.getProfiles(),
+          ]);
+          setSubscriptionSummary(sub);
+          const isMultiPerfil =
+            sub?.plan?.permiteMultiplosPerfis === true &&
+            (sub?.subscription?.totalPerfisPermitidos ?? 1) > 1;
+
+          if ((!isMultiPerfil || profiles.length === 1) && profiles.length > 0) {
+            const primary = profiles.find((p) => p.isPrimary) || profiles[0];
+            setCurrentProfile(primary);
+          }
+        } catch {
+          // fallback
+        }
+
         return res.user;
       } finally {
         setIsLoading(false);
       }
     },
-    [],
+    [setCurrentProfile],
   );
 
   const register = useCallback(
@@ -109,12 +218,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await apiClient.register(data);
         setUser(res.user);
         setToken(res.token);
+
+        // Cria e seleciona o perfil titular automaticamente para o novo usuário
+        try {
+          const [sub, profiles] = await Promise.all([
+            apiClient.getSubscriptionSummary(),
+            apiClient.getProfiles(),
+          ]);
+          setSubscriptionSummary(sub);
+          if (profiles.length > 0) {
+            const primary = profiles.find((p) => p.isPrimary) || profiles[0];
+            setCurrentProfile(primary);
+          }
+        } catch {
+          // fallback
+        }
+
         return res.user;
       } finally {
         setIsLoading(false);
       }
     },
-    [],
+    [setCurrentProfile],
   );
 
   const loginWithGoogle = useCallback(
@@ -126,13 +251,44 @@ try {
         );
         setUser(res.user);
         setToken(res.token);
+
+        try {
+          const [sub, profiles] = await Promise.all([
+            apiClient.getSubscriptionSummary(),
+            apiClient.getProfiles(),
+          ]);
+          setSubscriptionSummary(sub);
+          const isMultiPerfil =
+            sub?.plan?.permiteMultiplosPerfis === true &&
+            (sub?.subscription?.totalPerfisPermitidos ?? 1) > 1;
+
+          if ((!isMultiPerfil || profiles.length === 1) && profiles.length > 0) {
+            const primary = profiles.find((p) => p.isPrimary) || profiles[0];
+            setCurrentProfile(primary);
+          }
+        } catch {
+          // fallback
+        }
+
         return res.user;
       } finally {
         setIsLoading(false);
       }
     },
-    [],
+    [setCurrentProfile],
   );
+
+  const sendVerificationCode = useCallback(async (email?: string) => {
+    return apiClient.sendVerificationCode(email);
+  }, []);
+
+  const verifyEmail = useCallback(async (code: string, email?: string) => {
+    const res = await apiClient.verifyEmail(code, email);
+    if (res.user) {
+      setUser(res.user);
+    }
+    return res;
+  }, []);
 
   const logout = useCallback(async () => {
     setIsLoading(true);
@@ -141,11 +297,14 @@ try {
     } finally {
       setUser(null);
       setToken(null);
+      setCurrentProfileState(null);
+      setSubscriptionSummary(null);
       setIsLoading(false);
       if (typeof window !== "undefined") {
         try {
           localStorage.removeItem(AUTH_TOKEN_KEY);
           localStorage.removeItem(AUTH_USER_KEY);
+          localStorage.removeItem(AUTH_PROFILE_KEY);
         } catch {
           // storage fallback
         }
@@ -157,15 +316,36 @@ try {
     () => ({
       user,
       token,
+      currentProfile,
+      subscriptionSummary,
       isLoading,
       isAuthenticated: Boolean(user && token),
+      setCurrentProfile,
+      refreshSubscription,
       login,
       register,
       loginWithGoogle,
+      sendVerificationCode,
+      verifyEmail,
       logout,
       refreshUser,
     }),
-    [user, token, isLoading, login, register, loginWithGoogle, logout, refreshUser],
+    [
+      user,
+      token,
+      currentProfile,
+      subscriptionSummary,
+      isLoading,
+      setCurrentProfile,
+      refreshSubscription,
+      login,
+      register,
+      loginWithGoogle,
+      sendVerificationCode,
+      verifyEmail,
+      logout,
+      refreshUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

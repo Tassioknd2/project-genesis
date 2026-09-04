@@ -15,6 +15,7 @@ import {
   ForbiddenError,
   NotFoundError,
   BusinessRuleError,
+  ValidationError,
 } from "../domain/errors";
 import { userRepository, IUserRepository } from "../repositories/user.repository";
 import { authTokenRepository, AuthTokenRepository } from "../repositories/auth-token.repository";
@@ -57,6 +58,10 @@ export class AuthService {
 
     const passwordHash = await hashPassword(dto.password);
 
+    // Gera código de confirmação de e-mail de 6 dígitos (expira em 15 minutos)
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiraEm = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
     const newUser = await this.userRepo.create({
       nome: dto.nome,
       email: dto.email,
@@ -66,13 +71,23 @@ export class AuthService {
       provider: "local",
       telefone: dto.telefone,
       crm: dto.crm,
+      emailVerificado: false,
+      codigoVerificacaoEmail: {
+        codigo: verificationCode,
+        expiraEm,
+      },
     });
+
+    // Simulação do envio de e-mail seguro com código OTP
+    console.info(
+      `[CARDIO_EMAIL_SERVICE] Código de confirmação enviado para ${newUser.email}: [ ${verificationCode} ] (Válido por 15 minutos)`,
+    );
 
     await auditLogRepository.create({
       entidade: "patient",
       entidadeId: newUser.id,
       acao: "USUARIO_CRIADO",
-      detalhes: `Conta criada para '${newUser.nome}' (${newUser.email}) com perfil ${newUser.role}`,
+      detalhes: `Conta criada para '${newUser.nome}' (${newUser.email}) com perfil ${newUser.role}. Código de verificação gerado.`,
       autor: newUser.nome,
     });
 
@@ -185,6 +200,7 @@ export class AuthService {
         provider: "google",
         googleId: payload.sub,
         avatarUrl: payload.picture,
+        emailVerificado: true,
       });
 
       await auditLogRepository.create({
@@ -370,6 +386,114 @@ async updateProfile(userId: string, dto: UpdateProfileDTO): Promise<UserSafeProf
     if (dto.crm !== undefined) updates.crm = dto.crm;
     const updated = await this.userRepo.update(userId, updates);
     return this.toSafeProfile(updated);
+  }
+
+  /**
+   * Envia ou reenvia um código de verificação de e-mail de 6 dígitos
+   */
+  async sendVerificationCode(
+    identifier: string,
+  ): Promise<{ success: boolean; message: string; previewCode?: string }> {
+    let user = await this.userRepo.findById(identifier);
+    if (!user) {
+      user = await this.userRepo.findByEmail(identifier);
+    }
+    if (!user) {
+      throw new NotFoundError("Conta", identifier);
+    }
+
+    if (user.emailVerificado) {
+      return {
+        success: true,
+        message: "O seu e-mail já foi verificado anteriormente com sucesso.",
+      };
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiraEm = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    await this.userRepo.update(user.id, {
+      codigoVerificacaoEmail: {
+        codigo: verificationCode,
+        expiraEm,
+      },
+    });
+
+    console.info(
+      `[CARDIO_EMAIL_SERVICE] Reenvio de código de confirmação para ${user.email}: [ ${verificationCode} ] (Válido por 15 minutos)`,
+    );
+
+    return {
+      success: true,
+      message: `Código de verificação de 6 dígitos enviado para ${user.email}.`,
+      previewCode: verificationCode,
+    };
+  }
+
+  /**
+   * Valida o código de 6 dígitos digitado pelo usuário e ativa o e-mail
+   */
+  async verifyEmailCode(
+    identifier: string,
+    code: string,
+  ): Promise<{ success: boolean; user: UserSafeProfile; message: string }> {
+    let user = await this.userRepo.findById(identifier);
+    if (!user) {
+      user = await this.userRepo.findByEmail(identifier);
+    }
+    if (!user) {
+      throw new NotFoundError("Conta de usuário", identifier);
+    }
+
+    if (user.emailVerificado) {
+      return {
+        success: true,
+        user: this.toSafeProfile(user),
+        message: "E-mail já verificado com sucesso!",
+      };
+    }
+
+    const cleanCode = code.replace(/\D/g, "").trim();
+
+    if (!user.codigoVerificacaoEmail) {
+      throw new ValidationError(
+        "Nenhum código ativo encontrado para este e-mail. Solicite um novo código.",
+      );
+    }
+
+    const { codigo, expiraEm } = user.codigoVerificacaoEmail;
+
+    if (new Date(expiraEm) < new Date()) {
+      throw new ValidationError(
+        "O código de confirmação expirou (limite de 15 minutos). Por favor, clique em Reenviar Código.",
+      );
+    }
+
+    if (cleanCode !== codigo) {
+      throw new ValidationError(
+        "Código incorreto. Por favor, verifique os 6 dígitos recebidos no seu e-mail.",
+      );
+    }
+
+    // Marca como verificado e limpa o código
+    const updated = await this.userRepo.update(user.id, {
+      emailVerificado: true,
+      codigoVerificacaoEmail: undefined,
+    });
+
+    await auditLogRepository.create({
+      entidade: "patient",
+      entidadeId: user.id,
+      acao: "EMAIL_VERIFICADO",
+      detalhes: `E-mail ${user.email} confirmado com sucesso via código de verificação.`,
+      autor: user.nome,
+    });
+
+    return {
+      success: true,
+      user: this.toSafeProfile(updated),
+      message: "E-mail verificado com sucesso! Seu acesso clínico está 100% liberado.",
+    };
   }
 }
 
