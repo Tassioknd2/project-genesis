@@ -287,7 +287,7 @@ export class SubscriptionService {
         nome: user?.nome || "Profissional Titular",
         email: user?.email || "clinica@cardioagenda.com.br",
         role:
-          user?.role === "recepcionista" || user?.role === "crm_admin" ? user.role : "medico",
+          user?.role === "medico" ? "medico" : "recepcionista",
         tipo: "usuario",
         crm: user?.crm || (isMedico ? "SP-123456" : undefined),
         avatarColor: isMedico ? "#2563EB" : "#10B981",

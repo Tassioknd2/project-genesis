@@ -134,7 +134,7 @@ export class SandboxPaymentGateway implements IPaymentGateway {
     // Extrai o ID da assinatura dos diferentes formatos de payload
     const paymentObj = (payload["payment"] as Record<string, unknown>) || {};
     const dataObj =
-      ((payload["data"] as Record<string, unknown>)?.object as Record<string, unknown>) || {};
+      ((payload["data"] as Record<string, unknown>)?.["object"] as Record<string, unknown>) || {};
 
     const gatewaySubscriptionId =
       (payload["gatewaySubscriptionId"] as string) ||

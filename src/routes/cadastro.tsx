@@ -110,6 +110,7 @@ export function CadastroPage() {
       }, 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [step, segundosParaReenvio]);
 
   // Validações em tempo real da senha
