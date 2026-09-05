@@ -97,12 +97,14 @@ export interface CheckoutRequestDTO {
   metodoPagamento: "cartao" | "pix" | "boleto";
   paymentToken?: string | undefined; // Token gerado pelo SDK do Gateway no client-side
   cpfCnpj?: string | undefined; // CPF/CNPJ do assinante exigido por gateways no Brasil
-  cartao?: {
-    numero: string;
-    nomeTitular: string;
-    validade: string;
-    cvv: string;
-  };
+  cartao?:
+    | {
+        numero: string;
+        nomeTitular: string;
+        validade: string;
+        cvv: string;
+      }
+    | undefined;
 }
 
 export interface CreateProfileDTO {
