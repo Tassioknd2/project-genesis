@@ -79,7 +79,7 @@ function ProtectedAgendaPage() {
           .then((profiles) => {
             if (profiles && profiles.length > 0) {
               const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-              setCurrentProfile(primary);
+              setCurrentProfile(primary ?? null);
             }
           })
           .catch(() => {});

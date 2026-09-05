@@ -286,7 +286,8 @@ export class SubscriptionService {
         userId,
         nome: user?.nome || "Profissional Titular",
         email: user?.email || "clinica@cardioagenda.com.br",
-        role: user?.role || "medico",
+        role:
+          user?.role === "recepcionista" || user?.role === "crm_admin" ? user.role : "medico",
         tipo: "usuario",
         crm: user?.crm || (isMedico ? "SP-123456" : undefined),
         avatarColor: isMedico ? "#2563EB" : "#10B981",
@@ -401,8 +402,12 @@ export class SubscriptionService {
       }
     }
 
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== undefined),
+    ) as Partial<Profile>;
+
     const updated = await this.profRepo.update(profileId, {
-      ...data,
+      ...cleanData,
       nome: data.nome ? data.nome.trim() : profile.nome,
       email: data.email ? data.email.trim().toLowerCase() : profile.email,
     });
