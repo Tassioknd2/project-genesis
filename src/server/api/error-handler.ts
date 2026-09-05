@@ -66,8 +66,7 @@ export function handleApiError(error: unknown): Response {
     success: false,
     error: {
       code: "INTERNAL_SERVER_ERROR",
-      message: error instanceof Error ? error.message : "Ocorreu um erro interno no servidor.",
-      details: error instanceof Error ? error.stack : undefined,
+      message: "Ocorreu um erro interno no servidor.",
     },
   };
   return new Response(JSON.stringify(body), {

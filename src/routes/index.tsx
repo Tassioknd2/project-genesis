@@ -1,247 +1,470 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, HeartPulse, MessageCircle, ShieldCheck } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import dashboardDesktop from "@/assets/dashboard-desktop.png.asset.json";
-import appMobile from "@/assets/app-mobile.png.asset.json";
-import pacientesDesktop from "@/assets/pacientes-desktop.png.asset.json";
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { AppHeader } from "@/components/AppHeader";
+import { DesktopAgendaView, type FiltroAgenda } from "@/components/desktop/DesktopAgendaView";
+import { MobileAgendaView, type FiltroMobile } from "@/components/mobile/MobileAgendaView";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
+import { EditarRegistroDialog, type EdicaoResultado } from "@/components/EditarRegistroDialog";
+import { ScrollProgressHeart } from "@/components/ScrollProgressHeart";
+import {
+  NovoAgendamentoWizard,
+  type NovoAgendamentoDraft,
+} from "@/components/NovoAgendamentoWizard";
+import {
+  RemarcarAgendamentoDialog,
+  type RemarcacaoResultado,
+} from "@/components/RemarcarAgendamentoDialog";
+import {
+  HOJE_ISO,
+  MEDICO,
+  categoriaDe,
+  formatarTipos,
+  fromISODate,
+  getAgendaPorData,
+  isPendencia,
+  ordenarPorHorario,
+  pacientes,
+  statusInfo,
+  toISODate,
+  type Appointment,
+  type CategoriaAtendimento,
+  type Etiqueta,
+  type EtiquetaCor,
+} from "@/lib/agenda-data";
+import type { Action } from "@/components/desktop/DesktopAppointmentCard";
+import type { MobileAction } from "@/components/mobile/MobileAppointmentCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      {
-        title: "Agenda Cardio — Agenda e confirmação no WhatsApp para clínicas de cardiologia",
-      },
+      { title: "Agenda Cardio — Agenda do dia" },
       {
         name: "description",
         content:
-          "Veja as telas reais do Agenda Cardio: painel do dia, confirmações automáticas no WhatsApp e cadastro de pacientes. 30 dias grátis para a sua clínica.",
+          "Painel da agenda diária da clínica de cardiologia: confirmações por WhatsApp, pendências e ações rápidas de agendamento.",
       },
-      {
-        property: "og:title",
-        content: "Agenda Cardio — Agenda e confirmação no WhatsApp",
-      },
+      { property: "og:title", content: "Agenda Cardio — Agenda do dia" },
       {
         property: "og:description",
-        content:
-          "Painel do dia, confirmação automática no WhatsApp e ficha de pacientes em um só lugar. Telas reais do produto.",
+        content: "Confirmações por WhatsApp, pendências e controle da agenda do dia da clínica.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: HomePage,
+  component: AgendaPage,
 });
 
-export function HomePage() {
+function AgendaPage() {
+  const [dataSelecionada, setDataSelecionada] = useState<Date>(() => fromISODate(HOJE_ISO));
+  const [extras, setExtras] = useState<Record<string, Appointment[]>>({});
+  const [removidos, setRemovidos] = useState<Record<string, string[]>>({});
+  const [alteracoes, setAlteracoes] = useState<Record<string, Appointment>>({});
+  const [notas, setNotas] = useState<Record<string, string[]>>({});
+  const [etiquetas, setEtiquetas] = useState<Record<string, Etiqueta[]>>({});
+  const [filtro, setFiltro] = useState<FiltroAgenda>("todos");
+  const [busca, setBusca] = useState("");
+  const [categoria, setCategoria] = useState<CategoriaAtendimento | null>(null);
+  const [editando, setEditando] = useState<Appointment | null>(null);
+  const [remarcando, setRemarcando] = useState<Appointment | null>(null);
+  const [wizardAberto, setWizardAberto] = useState(false);
+
+  const isoSelecionado = toISODate(dataSelecionada);
+
+  // Ao abrir o sistema, a agenda começa sempre no dia atual da máquina.
+  useEffect(() => {
+    const hoje = new Date();
+    if (toISODate(hoje) !== HOJE_ISO) setDataSelecionada(hoje);
+  }, []);
+
+  // Agenda de qualquer data = base fictícia + criados na sessão - remarcados + alterações.
+  const resolverAgenda = useCallback(
+    (iso: string) => {
+      const base = [...getAgendaPorData(iso), ...(extras[iso] ?? [])];
+      const filtrados = base.filter((a) => !(removidos[iso] ?? []).includes(a.id));
+      return ordenarPorHorario(filtrados.map((a) => alteracoes[a.id] ?? a));
+    },
+    [extras, alteracoes, removidos],
+  );
+
+  const agenda = useMemo(() => resolverAgenda(isoSelecionado), [isoSelecionado, resolverAgenda]);
+
+  useEffect(() => {
+    setFiltro("todos");
+  }, [isoSelecionado]);
+
+  const confirmados = agenda.filter(
+    (a) => a.status === "confirmado" || a.status === "concluido",
+  ).length;
+  const pendenciasList = agenda.filter(isPendencia);
+  const totalPendencias = pendenciasList.length;
+  const semResposta = agenda.filter(
+    (a) => a.status === "aguardando" || a.pendencia === "sem_resposta",
+  ).length;
+  const faltas = agenda.filter((a) => a.status === "falta").length;
+  const recusados = agenda.filter(
+    (a) => a.status === "recusado" || a.pendencia === "recusado",
+  ).length;
+  const total = agenda.length;
+
+  const totalExames = agenda.filter((a) => {
+    if (a.tipos && a.tipos.length > 0) return a.tipos.some((t) => categoriaDe(t) === "exame");
+    return categoriaDe(a.tipo) === "exame";
+  }).length;
+  const totalConsultas = agenda.filter((a) => {
+    if (a.tipos && a.tipos.length > 0) return a.tipos.some((t) => categoriaDe(t) === "consulta");
+    return categoriaDe(a.tipo) === "consulta";
+  }).length;
+
+  const taxaConfirmacao = total > 0 ? Math.round((confirmados / total) * 100) : 0;
+
+  const visiveis = useMemo(
+    () =>
+      agenda.filter((a) => {
+        if (categoria) {
+          const matchCat =
+            a.tipos && a.tipos.length > 0
+              ? a.tipos.some((t) => categoriaDe(t) === categoria)
+              : categoriaDe(a.tipo) === categoria;
+          if (!matchCat) return false;
+        }
+        if (filtro === "pendencias") {
+          if (!isPendencia(a)) return false;
+        } else if (filtro !== "todos" && a.status !== filtro) {
+          return false;
+        }
+        if (busca) {
+          const q = busca.toLowerCase();
+          const matchTipo =
+            a.tipo.toLowerCase().includes(q) ||
+            (a.tipos && a.tipos.some((t) => t.toLowerCase().includes(q)));
+          return (
+            a.paciente.nome.toLowerCase().includes(q) ||
+            matchTipo ||
+            a.paciente.convenio.toLowerCase().includes(q)
+          );
+        }
+        return true;
+      }),
+    [agenda, filtro, busca, categoria],
+  );
+
+  function handleAction(appointment: Appointment, action: Action | MobileAction) {
+    if (action.status === "remarcado" || action.label.toLowerCase().includes("remarcar")) {
+      setRemarcando(appointment);
+      return;
+    }
+
+    if (action.status) {
+      setAlteracoes((atual) => ({
+        ...atual,
+        [appointment.id]: {
+          ...appointment,
+          status: action.status!,
+          pendencia: undefined,
+        },
+      }));
+      toast.success(`${appointment.paciente.nome.split(" ")[0]} — ${action.label.toLowerCase()}`, {
+        description: `Estado atualizado para "${statusInfo[action.status].rotulo}".`,
+      });
+    } else {
+      toast.info(`${action.label} — ${appointment.paciente.nome}`, {
+        description: "Esta ação exige confirmação humana (disponível na versão conectada).",
+      });
+    }
+  }
+
+  function handleRemarcarConfirmado(resultado: RemarcacaoResultado) {
+    const {
+      appointment,
+      novaData,
+      novoHorario,
+      paciente: pac,
+      tipos,
+      duracaoMin,
+      motivo,
+    } = resultado;
+    const isoDestino = toISODate(novaData);
+    const primaryTipo = tipos[0] || appointment.tipo;
+
+    const idxPaciente = pacientes.findIndex((p) => p.id === pac.id);
+    if (idxPaciente >= 0) pacientes[idxPaciente] = pac;
+    else pacientes.push(pac);
+
+    const atualizado: Appointment = {
+      ...appointment,
+      hora: novoHorario,
+      paciente: pac,
+      tipo: primaryTipo,
+      tipos,
+      duracaoMin,
+      status: "agendado",
+      pendencia: undefined,
+    };
+
+    if (motivo) {
+      const timestamp = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const notaTexto = `[Remarcação às ${timestamp}]: ${motivo} (Transferido para ${novaData.toLocaleDateString("pt-BR")} às ${novoHorario})`;
+      setNotas((atual) => ({
+        ...atual,
+        [atualizado.id]: [...(atual[atualizado.id] ?? []), notaTexto],
+      }));
+    }
+
+    if (isoDestino === isoSelecionado) {
+      setAlteracoes((atual) => ({
+        ...atual,
+        [atualizado.id]: atualizado,
+      }));
+    } else {
+      setRemovidos((prev) => ({
+        ...prev,
+        [isoSelecionado]: [...(prev[isoSelecionado] ?? []), appointment.id],
+      }));
+
+      setExtras((prev) => ({
+        ...prev,
+        [isoDestino]: [
+          ...(prev[isoDestino] ?? []).filter((a) => a.id !== atualizado.id),
+          atualizado,
+        ],
+      }));
+
+      setAlteracoes((prev) => {
+        const next = { ...prev };
+        delete next[appointment.id];
+        return next;
+      });
+    }
+
+    const rotuloTipos = formatarTipos(tipos, primaryTipo);
+    toast.success(`Agendamento remarcado com sucesso!`, {
+      description: `${pac.nome.split(" ")[0]} · ${rotuloTipos} · ${novaData.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })} às ${novoHorario}`,
+    });
+  }
+
+  function handleCancelarAgendamento(appointment: Appointment, motivo?: string) {
+    setAlteracoes((atual) => ({
+      ...atual,
+      [appointment.id]: {
+        ...appointment,
+        status: "recusado",
+        pendencia: "recusado",
+      },
+    }));
+
+    if (motivo) {
+      const timestamp = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setNotas((atual) => ({
+        ...atual,
+        [appointment.id]: [
+          ...(atual[appointment.id] ?? []),
+          `[Cancelado às ${timestamp}]: ${motivo}`,
+        ],
+      }));
+    }
+
+    toast.error(`Agendamento cancelado — ${appointment.paciente.nome.split(" ")[0]}`, {
+      description: motivo || "Horário liberado na agenda do dia.",
+    });
+  }
+
+  function handleNovoAgendamento(draft: NovoAgendamentoDraft) {
+    if (!pacientes.some((p) => p.id === draft.paciente.id)) {
+      pacientes.push(draft.paciente);
+    }
+
+    const novo: Appointment = {
+      id: `novo-${Date.now()}`,
+      hora: draft.hora,
+      duracaoMin: draft.duracaoMin,
+      paciente: draft.paciente,
+      tipo: draft.tipo,
+      tipos: draft.tipos,
+      medico: MEDICO,
+      status: "agendado",
+    };
+
+    const isoDraft = toISODate(draft.data);
+
+    if (draft.observacoes) {
+      const obs = draft.observacoes;
+      setNotas((atual) => ({ ...atual, [novo.id]: [...(atual[novo.id] ?? []), obs] }));
+    }
+
+    setExtras((atual) => ({
+      ...atual,
+      [isoDraft]: [...(atual[isoDraft] ?? []), novo],
+    }));
+    setFiltro("todos");
+    setBusca("");
+    setCategoria(null);
+
+    if (isoDraft !== isoSelecionado) {
+      setDataSelecionada(draft.data);
+    }
+
+    const rotuloTipos = formatarTipos(draft.tipos, draft.tipo);
+
+    toast.success(`Agendamento criado — ${draft.paciente.nome.split(" ")[0]}`, {
+      description: `${rotuloTipos} · ${draft.hora} · ${statusInfo.agendado.rotulo} (${draft.duracaoMin} min)`,
+    });
+  }
+
+  function salvarEdicao(appointment: Appointment, resultado: EdicaoResultado) {
+    const indice = pacientes.findIndex((p) => p.id === resultado.paciente.id);
+    if (indice >= 0) pacientes[indice] = resultado.paciente;
+
+    setAlteracoes((atual) => ({
+      ...atual,
+      [appointment.id]: {
+        ...(atual[appointment.id] ?? appointment),
+        paciente: resultado.paciente,
+        ...(resultado.agendamento ?? {}),
+      },
+    }));
+    toast.success("Informações atualizadas");
+  }
+
+  function addNota(id: string, texto: string) {
+    setNotas((atual) => ({ ...atual, [id]: [...(atual[id] ?? []), texto] }));
+    toast.success("Observação adicionada");
+  }
+
+  function removeNota(id: string, indice: number) {
+    setNotas((atual) => ({
+      ...atual,
+      [id]: (atual[id] ?? []).filter((_, i) => i !== indice),
+    }));
+  }
+
+  function addEtiqueta(id: string, texto: string, cor: EtiquetaCor) {
+    const etiqueta: Etiqueta = { id: `et-${Date.now()}`, texto, cor };
+    setEtiquetas((atual) => ({ ...atual, [id]: [...(atual[id] ?? []), etiqueta] }));
+  }
+
+  function removeEtiqueta(id: string, idEtiqueta: string) {
+    setEtiquetas((atual) => ({
+      ...atual,
+      [id]: (atual[id] ?? []).filter((e) => e.id !== idEtiqueta),
+    }));
+  }
+
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      {/* Navegação */}
-      <header className="sticky top-0 z-40 border-b border-line2/60 bg-paper/85 backdrop-blur-md">
-        <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-ink">
-              <HeartPulse className="size-4.5 text-amber" />
-            </span>
-            <span className="text-lg font-bold tracking-tight">
-              Agenda<span className="text-amber">Cardio</span>
-            </span>
-          </Link>
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-paper font-sans text-ink selection:bg-amber/20">
+      <AppHeader
+        selectedDate={dataSelecionada}
+        onSelectDate={setDataSelecionada}
+        onNovoAgendamento={handleNovoAgendamento}
+        agendaDoDia={resolverAgenda}
+      />
 
-          <div className="flex items-center gap-2 sm:gap-5">
-            <a
-              href="#produto"
-              className="hidden text-sm font-medium text-inksoft transition-colors hover:text-ink sm:block"
-            >
-              Produto
-            </a>
-            <Link
-              to="/planos"
-              className="hidden text-sm font-medium text-inksoft transition-colors hover:text-ink sm:block"
-            >
-              Planos
-            </Link>
-            <ThemeToggle />
-            <Link
-              to="/login"
-              className="rounded-lg bg-ink px-5 py-2 text-sm font-semibold text-cream transition-opacity hover:opacity-90"
-            >
-              Entrar
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <ScrollProgressHeart />
 
-      <main>
-        {/* Hero */}
-        <section className="mx-auto w-full max-w-4xl px-5 pt-20 pb-14 text-center sm:pt-28">
-          <span className="inline-flex items-center rounded-full border border-amber/25 bg-amber/10 px-4 py-1 font-mono text-[11px] font-semibold tracking-wider text-amberdeep uppercase">
-            Software para clínicas de cardiologia
-          </span>
-
-          <h1 className="mt-7 text-4xl leading-[1.12] font-bold tracking-tight text-balance sm:text-6xl">
-            A agenda do dia resolvida <br className="hidden sm:block" />
-            <span className="text-amber">antes do telefone tocar.</span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-inksoft sm:text-lg">
-            Confirmações automáticas no WhatsApp, orientações de preparo por exame e a ficha
-            completa do paciente — tudo na mesma tela da recepção.
-          </p>
-
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/cadastro"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber px-7 py-3.5 text-base font-bold text-cream shadow-lg shadow-amber/20 transition-transform hover:-translate-y-0.5 sm:w-auto"
-            >
-              Testar 30 dias grátis
-              <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              to="/login"
-              className="inline-flex w-full items-center justify-center rounded-xl border-2 border-ink/15 bg-card px-7 py-3.5 text-base font-semibold text-ink transition-colors hover:border-ink/40 sm:w-auto"
-            >
-              Ver o painel
-            </Link>
-          </div>
-        </section>
-
-        {/* Vitrine principal — painel real no desktop */}
-        <section id="produto" className="mx-auto w-full max-w-6xl px-5 pb-24">
-          <figure className="relative">
-            <div className="overflow-hidden rounded-2xl border border-line2 bg-card shadow-2xl">
-              <div className="flex h-10 items-center gap-1.5 border-b border-line2/70 bg-paper px-4">
-                <span className="size-2.5 rounded-full bg-line2" />
-                <span className="size-2.5 rounded-full bg-line2" />
-                <span className="size-2.5 rounded-full bg-line2" />
-                <span className="ml-3 font-mono text-[11px] text-inksoft">
-                  painel.agendacardio.com.br/agenda
-                </span>
-              </div>
-              <img
-                src={dashboardDesktop.url}
-                alt="Painel do dia do Agenda Cardio no computador, com indicadores, filtros e cartões de pacientes"
-                width={1900}
-                height={853}
-                loading="lazy"
-                className="w-full"
-              />
-            </div>
-
-            {/* Cartão flutuante de confirmação */}
-            <div className="absolute -bottom-8 right-6 hidden w-[300px] rounded-xl border border-line2 bg-card p-4 shadow-xl lg:block">
-              <div className="mb-2 flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-full bg-ok/15">
-                  <MessageCircle className="size-4 text-ok" />
-                </span>
-                <span className="text-xs font-bold">Confirmação automática</span>
-              </div>
-              <p className="text-[13px] leading-relaxed text-inksoft">
-                A paciente respondeu no WhatsApp e a agenda das 08:05 foi confirmada sozinha.
-              </p>
-            </div>
-
-            <figcaption className="mt-12 text-center font-mono text-[11px] tracking-wider text-inksoft uppercase lg:mt-8">
-              01 · Painel do dia no computador
-            </figcaption>
-          </figure>
-        </section>
-
-        {/* Galeria — mobile + pacientes */}
-        <section className="border-y border-line2/60 bg-card/40 py-20">
-          <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-14 px-5 lg:grid-cols-[300px_1fr]">
-            <figure className="mx-auto w-full max-w-[300px]">
-              <img
-                src={appMobile.url}
-                alt="Agenda Cardio no celular, mostrando a agenda do dia e a barra de navegação"
-                width={338}
-                height={594}
-                loading="lazy"
-                className="w-full rounded-3xl border border-line2 shadow-xl"
-              />
-              <figcaption className="mt-5 text-center font-mono text-[11px] tracking-wider text-inksoft uppercase">
-                02 · No celular da recepção
-              </figcaption>
-            </figure>
-
-            <figure>
-              <img
-                src={pacientesDesktop.url}
-                alt="Aba Pacientes do Agenda Cardio, com cadastro, convênio, contato e observações clínicas"
-                width={1410}
-                height={635}
-                loading="lazy"
-                className="w-full rounded-2xl border border-line2 shadow-xl"
-              />
-              <figcaption className="mt-5 font-mono text-[11px] tracking-wider text-inksoft uppercase">
-                03 · Ficha completa de pacientes
-              </figcaption>
-            </figure>
-          </div>
-        </section>
-
-        {/* Três pilares */}
-        <section className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 py-24 md:grid-cols-3">
-          {[
-            {
-              icon: MessageCircle,
-              titulo: "Confirmação no WhatsApp",
-              texto:
-                "Lembretes e orientações de preparo saem sozinhos. A resposta do paciente atualiza a agenda em tempo real.",
-            },
-            {
-              icon: CheckCircle2,
-              titulo: "Menos faltas no dia",
-              texto:
-                "Pendências, faltas e reagendamentos ficam visíveis em uma linha só, com ações rápidas em cada cartão.",
-            },
-            {
-              icon: ShieldCheck,
-              titulo: "Dados protegidos",
-              texto:
-                "Prontuário, contato e observações clínicas com controle de acesso e conformidade com a LGPD.",
-            },
-          ].map((item) => (
-            <article
-              key={item.titulo}
-              className="group rounded-2xl border border-line2 bg-card p-7 transition-shadow hover:shadow-lg"
-            >
-              <span className="mb-6 flex size-11 items-center justify-center rounded-xl bg-amber/10 text-amber transition-colors group-hover:bg-amber group-hover:text-cream">
-                <item.icon className="size-5" />
-              </span>
-              <h2 className="mb-2.5 text-lg font-bold">{item.titulo}</h2>
-              <p className="text-sm leading-relaxed text-inksoft">{item.texto}</p>
-            </article>
-          ))}
-        </section>
-
-        {/* Chamada final */}
-        <section className="mx-auto w-full max-w-6xl px-5 pb-24">
-          <div className="flex flex-col items-center gap-6 rounded-3xl bg-ink px-8 py-14 text-center">
-            <h2 className="max-w-xl text-3xl font-bold tracking-tight text-cream text-balance sm:text-4xl">
-              Comece hoje com a agenda da sua clínica.
-            </h2>
-            <p className="max-w-lg text-sm text-cream/70">
-              Sem instalação e sem cartão de crédito. 30 dias para testar com a sua equipe.
-            </p>
-            <Link
-              to="/cadastro"
-              className="inline-flex items-center gap-2 rounded-xl bg-amber px-7 py-3.5 text-base font-bold text-cream transition-transform hover:-translate-y-0.5"
-            >
-              Criar minha conta
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </section>
+      {/* Camada Desktop (Totalmente Intacta e Isolada) */}
+      <main className="hidden md:block">
+        <DesktopAgendaView
+          dataSelecionada={dataSelecionada}
+          total={total}
+          confirmados={confirmados}
+          faltas={faltas}
+          taxaConfirmacao={taxaConfirmacao}
+          totalPendencias={totalPendencias}
+          semResposta={semResposta}
+          recusados={recusados}
+          totalExames={totalExames}
+          totalConsultas={totalConsultas}
+          filtro={filtro}
+          setFiltro={setFiltro}
+          busca={busca}
+          setBusca={setBusca}
+          categoria={categoria}
+          setCategoria={setCategoria}
+          visiveis={visiveis}
+          notas={notas}
+          etiquetas={etiquetas}
+          onAction={handleAction}
+          onAddNota={addNota}
+          onRemoveNota={removeNota}
+          onAddEtiqueta={addEtiqueta}
+          onRemoveEtiqueta={removeEtiqueta}
+          onEditar={(app) => setEditando(app)}
+          onRemarcar={(app) => setRemarcando(app)}
+          onAbrirWizard={() => setWizardAberto(true)}
+        />
       </main>
 
-      <footer className="border-t border-line2/60">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-5 py-8 text-xs text-inksoft sm:flex-row">
-          <span className="font-mono tracking-wider uppercase">
-            Agenda Cardio · Cardiologia & Diagnóstico
-          </span>
-          <span>© {new Date().getFullYear()} · Todos os direitos reservados</span>
-        </div>
-      </footer>
+      {/* Camada Mobile (Base Dedicada e Separada para Evolução Mobile) */}
+      <main className="block md:hidden">
+        <MobileAgendaView
+          dataSelecionada={dataSelecionada}
+          onSelectDate={setDataSelecionada}
+          total={total}
+          confirmados={confirmados}
+          faltas={faltas}
+          totalPendencias={totalPendencias}
+          totalExames={totalExames}
+          totalConsultas={totalConsultas}
+          filtro={filtro as FiltroMobile}
+          setFiltro={setFiltro as React.Dispatch<React.SetStateAction<FiltroMobile>>}
+          busca={busca}
+          setBusca={setBusca}
+          categoria={categoria}
+          setCategoria={setCategoria}
+          visiveis={visiveis}
+          notas={notas}
+          etiquetas={etiquetas}
+          onAction={handleAction}
+          onEditar={(app) => setEditando(app)}
+          onRemarcar={(app) => setRemarcando(app)}
+          onAbrirWizard={() => setWizardAberto(true)}
+        />
+      </main>
+
+      {/* Barra de Navegação Inferior Móvel */}
+      <MobileBottomNav
+        totalPendencias={totalPendencias}
+        onNovoAgendamento={() => setWizardAberto(true)}
+        onFiltroPendencias={() =>
+          setFiltro((prev) => (prev === "pendencias" ? "todos" : "pendencias"))
+        }
+        isFiltroPendenciasAtivo={filtro === "pendencias"}
+      />
+
+      {editando && (
+        <EditarRegistroDialog
+          open={!!editando}
+          onOpenChange={(aberto) => !aberto && setEditando(null)}
+          paciente={editando.paciente}
+          appointment={editando}
+          onSalvar={(resultado) => salvarEdicao(editando, resultado)}
+        />
+      )}
+
+      {remarcando && (
+        <RemarcarAgendamentoDialog
+          open={!!remarcando}
+          onOpenChange={(aberto) => !aberto && setRemarcando(null)}
+          appointment={remarcando}
+          dataAtual={dataSelecionada}
+          onConfirmarRemarcacao={handleRemarcarConfirmado}
+          onCancelarAgendamento={handleCancelarAgendamento}
+        />
+      )}
+
+      <NovoAgendamentoWizard
+        open={wizardAberto}
+        onOpenChange={setWizardAberto}
+        dataInicial={dataSelecionada}
+        onSalvar={handleNovoAgendamento}
+      />
     </div>
   );
 }

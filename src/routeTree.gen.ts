@@ -10,38 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AgendaRouteImport } from './routes/agenda'
-import { Route as AssinaturaRouteImport } from './routes/assinatura'
-import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as PacientesRouteImport } from './routes/pacientes'
-import { Route as PerfisRouteImport } from './routes/perfis'
-import { Route as PlanosRouteImport } from './routes/planos'
-import { Route as RegisterRouteImport } from './routes/register'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgendaRoute = AgendaRouteImport.update({
-  id: '/agenda',
-  path: '/agenda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssinaturaRoute = AssinaturaRouteImport.update({
-  id: '/assinatura',
-  path: '/assinatura',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastroRoute = CadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PacientesRoute = PacientesRouteImport.update({
@@ -49,102 +22,31 @@ const PacientesRoute = PacientesRouteImport.update({
   path: '/pacientes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PerfisRoute = PerfisRouteImport.update({
-  id: '/perfis',
-  path: '/perfis',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanosRoute = PlanosRouteImport.update({
-  id: '/planos',
-  path: '/planos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/agenda': typeof AgendaRoute
-  '/assinatura': typeof AssinaturaRoute
-  '/cadastro': typeof CadastroRoute
-  '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRoute
-  '/perfis': typeof PerfisRoute
-  '/planos': typeof PlanosRoute
-  '/register': typeof RegisterRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/agenda': typeof AgendaRoute
-  '/assinatura': typeof AssinaturaRoute
-  '/cadastro': typeof CadastroRoute
-  '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRoute
-  '/perfis': typeof PerfisRoute
-  '/planos': typeof PlanosRoute
-  '/register': typeof RegisterRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/agenda': typeof AgendaRoute
-  '/assinatura': typeof AssinaturaRoute
-  '/cadastro': typeof CadastroRoute
-  '/login': typeof LoginRoute
   '/pacientes': typeof PacientesRoute
-  '/perfis': typeof PerfisRoute
-  '/planos': typeof PlanosRoute
-  '/register': typeof RegisterRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/agenda'
-    | '/assinatura'
-    | '/cadastro'
-    | '/login'
-    | '/pacientes'
-    | '/perfis'
-    | '/planos'
-    | '/register'
+  fullPaths: '/' | '/pacientes'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/agenda'
-    | '/assinatura'
-    | '/cadastro'
-    | '/login'
-    | '/pacientes'
-    | '/perfis'
-    | '/planos'
-    | '/register'
-  id:
-    | '__root__'
-    | '/'
-    | '/agenda'
-    | '/assinatura'
-    | '/cadastro'
-    | '/login'
-    | '/pacientes'
-    | '/perfis'
-    | '/planos'
-    | '/register'
+  to: '/' | '/pacientes'
+  id: '__root__' | '/' | '/pacientes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AgendaRoute: typeof AgendaRoute
-  AssinaturaRoute: typeof AssinaturaRoute
-  CadastroRoute: typeof CadastroRoute
-  LoginRoute: typeof LoginRoute
   PacientesRoute: typeof PacientesRoute
-  PerfisRoute: typeof PerfisRoute
-  PlanosRoute: typeof PlanosRoute
-  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,34 +58,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/agenda': {
-      id: '/agenda'
-      path: '/agenda'
-      fullPath: '/agenda'
-      preLoaderRoute: typeof AgendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assinatura': {
-      id: '/assinatura'
-      path: '/assinatura'
-      fullPath: '/assinatura'
-      preLoaderRoute: typeof AssinaturaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cadastro': {
-      id: '/cadastro'
-      path: '/cadastro'
-      fullPath: '/cadastro'
-      preLoaderRoute: typeof CadastroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/pacientes': {
       id: '/pacientes'
       path: '/pacientes'
@@ -191,40 +65,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PacientesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/perfis': {
-      id: '/perfis'
-      path: '/perfis'
-      fullPath: '/perfis'
-      preLoaderRoute: typeof PerfisRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/planos': {
-      id: '/planos'
-      path: '/planos'
-      fullPath: '/planos'
-      preLoaderRoute: typeof PlanosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AgendaRoute: AgendaRoute,
-  AssinaturaRoute: AssinaturaRoute,
-  CadastroRoute: CadastroRoute,
-  LoginRoute: LoginRoute,
   PacientesRoute: PacientesRoute,
-  PerfisRoute: PerfisRoute,
-  PlanosRoute: PlanosRoute,
-  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

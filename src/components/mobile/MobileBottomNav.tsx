@@ -27,10 +27,10 @@ export function MobileBottomNav({
       <div className="mx-auto flex max-w-md items-center justify-around">
         {/* Agenda */}
         <Link
-          to="/agenda"
+          to="/"
           className={cn(
             "flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-xl py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors active:scale-95",
-            (pathname === "/agenda" || pathname === "/") && !isFiltroPendenciasAtivo
+            pathname === "/" && !isFiltroPendenciasAtivo
               ? "text-amberdeep"
               : "text-inksoft hover:text-ink",
           )}
@@ -40,7 +40,7 @@ export function MobileBottomNav({
         </Link>
 
         {/* Pendências */}
-        {(pathname === "/agenda" || pathname === "/") && onFiltroPendencias ? (
+        {pathname === "/" && onFiltroPendencias ? (
           <button
             type="button"
             onClick={onFiltroPendencias}
@@ -59,7 +59,7 @@ export function MobileBottomNav({
           </button>
         ) : (
           <Link
-            to="/agenda"
+            to="/"
             className="relative flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-xl py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-inksoft transition-colors active:scale-95"
           >
             <AlertTriangle className="size-5" />

@@ -7,25 +7,9 @@ import {
   HeartPulse,
   Plus,
   Users,
-  LogOut,
-  User as UserIcon,
-  Stethoscope,
-  Shield,
-  CreditCard,
-  Layers,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import {
   HOJE_ISO,
@@ -43,11 +27,11 @@ import {
 } from "@/components/NovoAgendamentoWizard";
 
 export interface DesktopAppHeaderProps {
-  selectedDate?: Date | undefined;
-  onSelectDate?: ((date: Date) => void) | undefined;
-  onNovoAgendamento?: ((draft: NovoAgendamentoDraft) => void) | undefined;
+  selectedDate?: Date;
+  onSelectDate?: (date: Date) => void;
+  onNovoAgendamento?: (draft: NovoAgendamentoDraft) => void;
   /** Resolve a agenda de uma data (inclui alterações feitas na sessão). */
-  agendaDoDia?: ((iso: string) => Appointment[]) | undefined;
+  agendaDoDia?: (iso: string) => Appointment[];
 }
 
 const MESES = [
@@ -101,7 +85,6 @@ export function DesktopAppHeader({
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
-  const { user, logout, currentProfile } = useAuth();
 
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
@@ -222,25 +205,6 @@ export function DesktopAppHeader({
         {/* Ações e Navegação Desktop */}
         <div className="flex items-center gap-3">
           <Link
-            to="/agenda"
-            aria-label="Acessar agenda clínica diária"
-            className={cn(
-              "inline-flex h-9.5 items-center gap-2 rounded-xl border px-3.5 font-mono text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95",
-              pathname === "/agenda"
-                ? "border-ink bg-ink text-cream shadow-xs"
-                : "border-line2/80 bg-card text-ink shadow-2xs hover:border-amber/60 hover:bg-paper hover:text-amberdeep",
-            )}
-          >
-            <CalendarIcon
-              className={cn(
-                "size-4 shrink-0 transition-colors",
-                pathname === "/agenda" ? "text-amber" : "text-amberdeep",
-              )}
-            />
-            <span>Agenda</span>
-          </Link>
-
-          <Link
             to="/pacientes"
             aria-label="Acessar diretório de pacientes"
             className={cn(
@@ -259,25 +223,6 @@ export function DesktopAppHeader({
             <span>Pacientes</span>
           </Link>
 
-          <Link
-            to="/assinatura"
-            aria-label="Aba de Assinatura e Gestão da Clínica"
-            className={cn(
-              "inline-flex h-9.5 items-center gap-2 rounded-xl border px-3.5 font-mono text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95",
-              pathname === "/assinatura"
-                ? "border-ink bg-ink text-cream shadow-xs"
-                : "border-line2/80 bg-card text-ink shadow-2xs hover:border-amber/60 hover:bg-paper hover:text-amberdeep",
-            )}
-          >
-            <CreditCard
-              className={cn(
-                "size-4 shrink-0 transition-colors",
-                pathname === "/assinatura" ? "text-amber" : "text-amberdeep",
-              )}
-            />
-            <span>Assinatura</span>
-          </Link>
-
           <ThemeToggle />
 
           <button
@@ -288,135 +233,6 @@ export function DesktopAppHeader({
             <Plus className="size-4 text-amber" />
             <span>Novo agendamento</span>
           </button>
-
-          {/* Perfil do Usuário e Logout */}
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  id="user-profile-menu-button"
-                  className="flex items-center gap-2 rounded-xl border border-line2/80 bg-card p-1.5 pr-3 shadow-2xs transition-all hover:border-amber/60 hover:bg-paper active:scale-95"
-                >
-                  <div
-                    style={{ backgroundColor: currentProfile?.avatarColor || "#1e293b" }}
-                    className="relative flex size-7 items-center justify-center rounded-lg text-xs font-bold text-white shadow-xs"
-                  >
-                    {currentProfile ? (
-                      currentProfile.nome.substring(0, 2).toUpperCase()
-                    ) : user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt={user.nome}
-                        className="size-7 rounded-lg object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      user.nome.substring(0, 2).toUpperCase()
-                    )}
-                    <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-card bg-ok" />
-                  </div>
-                  <div className="text-left leading-tight hidden lg:block">
-                    <div className="text-xs font-bold text-ink max-w-[110px] truncate">
-                      {currentProfile?.nome || user.nome}
-                    </div>
-                    <div className="font-mono text-[9px] uppercase tracking-wider text-amberdeep">
-                      {currentProfile
-                        ? currentProfile.role === "medico"
-                          ? "Cardiologista"
-                          : currentProfile.role === "recepcionista"
-                            ? "Recepção"
-                            : "CRM"
-                        : user.role === "medico"
-                          ? "Cardiologista"
-                          : "Recepção"}
-                    </div>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-1.5">
-                <DropdownMenuLabel className="font-normal px-2 py-2 bg-paper/60 rounded-lg mb-1">
-                  <div className="text-xs font-bold text-ink flex items-center justify-between">
-                    <span className="truncate">{currentProfile?.nome || user.nome}</span>
-                    {currentProfile?.isPrimary && (
-                      <span className="text-[9px] px-1.5 py-0.5 font-mono uppercase bg-ink text-cream rounded">
-                        Titular
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-inksoft truncate">
-                    {currentProfile?.email || user.email}
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className="rounded bg-amber/15 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-amberdeep">
-                      {currentProfile?.role || user.role}
-                    </span>
-                    {(currentProfile?.crm || user.crm) && (
-                      <span className="font-mono text-[9px] text-inksoft">
-                        CRM {currentProfile?.crm || user.crm}
-                      </span>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/perfis"
-                    className="cursor-pointer flex items-center gap-2 px-2 py-2 text-xs font-medium text-ink hover:bg-paper rounded-md transition"
-                  >
-                    <Users className="size-4 text-amberdeep" />
-                    <div className="flex-1 flex items-center justify-between">
-                      <span>Trocar Perfil</span>
-                      <span className="text-[10px] font-mono px-1 rounded bg-amber/20 text-amberdeep">
-                        Netflix
-                      </span>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/assinatura"
-                    className="cursor-pointer flex items-center gap-2 px-2 py-2 text-xs font-medium text-ink hover:bg-paper rounded-md transition"
-                  >
-                    <CreditCard className="size-4 text-amberdeep" />
-                    <span>Aba de Assinatura</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/planos"
-                    className="cursor-pointer flex items-center gap-2 px-2 py-2 text-xs font-medium text-ink hover:bg-paper rounded-md transition"
-                  >
-                    <Sparkles className="size-4 text-emerald-600" />
-                    <span>Tabela de Planos & Upgrade</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator className="my-1" />
-
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await logout();
-                    toast.info("Sessão finalizada");
-                  }}
-                  className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-950/30 px-2 py-2 text-xs font-medium"
-                >
-                  <LogOut className="size-4 mr-2" />
-                  <span>Sair da conta</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link
-              to="/login"
-              className="inline-flex h-9.5 items-center gap-1.5 rounded-xl border border-line2/80 bg-card px-3 font-mono text-xs font-bold uppercase tracking-wider text-ink shadow-2xs hover:border-amber/60 hover:bg-paper hover:text-amberdeep"
-            >
-              <UserIcon className="size-3.5 text-amber" />
-              <span>Entrar</span>
-            </Link>
-          )}
         </div>
       </div>
 

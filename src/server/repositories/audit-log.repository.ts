@@ -13,10 +13,6 @@ export class AuditLogRepository {
     return { ...log };
   }
 
-  async create(entry: Omit<AuditLog, "id" | "criadoEm">): Promise<AuditLog> {
-    return this.log(entry);
-  }
-
   async findByEntity(entidade: AuditLog["entidade"], entidadeId?: string): Promise<AuditLog[]> {
     let result = this.logs.filter((l) => l.entidade === entidade);
     if (entidadeId) {
