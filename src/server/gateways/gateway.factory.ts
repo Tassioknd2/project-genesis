@@ -10,7 +10,7 @@ import { SandboxPaymentGateway } from "./sandbox.gateway";
  * 3. Adicione a condição abaixo retornando a nova classe quando `process.env.PAYMENT_GATEWAY_PROVIDER === "asaas"`.
  */
 export function getPaymentGateway(): IPaymentGateway {
-  const provider = (process.env.PAYMENT_GATEWAY_PROVIDER || "sandbox").toLowerCase();
+  const provider = (process.env['PAYMENT_GATEWAY_PROVIDER'] || "sandbox").toLowerCase();
 
   switch (provider) {
     case "sandbox":

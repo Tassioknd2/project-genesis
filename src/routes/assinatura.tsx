@@ -189,8 +189,8 @@ export function AssinaturaPage() {
                     <div>
                       <div className="text-[11px] font-mono uppercase text-inksoft">Renovação</div>
                       <div className="text-xs font-bold text-ink">
-                        {sub?.dataRenovacao
-                          ? new Date(sub.dataRenovacao).toLocaleDateString("pt-BR")
+                        {sub?.fimPeriodo
+                          ? new Date(sub.fimPeriodo).toLocaleDateString("pt-BR")
                           : "01/10/2026"}
                       </div>
                       <div className="text-[10px] text-inksoft">Cobrança automática</div>
@@ -269,7 +269,7 @@ export function AssinaturaPage() {
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-inksoft">Módulo CRM Comercial:</span>
-                      {summary?.temCrmLiberado ? (
+                      {summary?.crmLiberado ? (
                         <span className="font-bold text-emerald-600 flex items-center gap-1">
                           <CheckCircle2 className="size-3.5" /> Incluso no Plano
                         </span>
@@ -302,7 +302,7 @@ export function AssinaturaPage() {
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {plano?.beneficios.map((ben, idx) => (
+                {plano?.features.map((ben: string, idx: number) => (
                   <div
                     key={idx}
                     className="flex items-start gap-2.5 p-3 rounded-xl bg-paper/40 border border-line2/60"

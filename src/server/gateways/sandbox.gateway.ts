@@ -103,9 +103,9 @@ export class SandboxPaymentGateway implements IPaymentGateway {
     // Formato 3: Payload simulado direto ({ eventType, gatewaySubscriptionId })
 
     const rawEventName =
-      (payload.event as string) ||
-      (payload.type as string) ||
-      (payload.eventType as string) ||
+      (payload["event"] as string) ||
+      (payload["type"] as string) ||
+      (payload["eventType"] as string) ||
       "PAYMENT_CONFIRMED";
 
     let eventType: WebhookEventType = "UNKNOWN";
@@ -132,28 +132,28 @@ export class SandboxPaymentGateway implements IPaymentGateway {
     }
 
     // Extrai o ID da assinatura dos diferentes formatos de payload
-    const paymentObj = (payload.payment as Record<string, unknown>) || {};
+    const paymentObj = (payload["payment"] as Record<string, unknown>) || {};
     const dataObj =
-      ((payload.data as Record<string, unknown>)?.object as Record<string, unknown>) || {};
+      ((payload["data"] as Record<string, unknown>)?.["object"] as Record<string, unknown>) || {};
 
     const gatewaySubscriptionId =
-      (payload.gatewaySubscriptionId as string) ||
-      (paymentObj.subscription as string) ||
-      (dataObj.subscription as string) ||
-      (payload.subscriptionId as string);
+      (payload["gatewaySubscriptionId"] as string) ||
+      (paymentObj["subscription"] as string) ||
+      (dataObj["subscription"] as string) ||
+      (payload["subscriptionId"] as string);
 
     const gatewayCustomerId =
-      (payload.gatewayCustomerId as string) ||
-      (paymentObj.customer as string) ||
-      (dataObj.customer as string);
+      (payload["gatewayCustomerId"] as string) ||
+      (paymentObj["customer"] as string) ||
+      (dataObj["customer"] as string);
 
     const valor =
-      typeof payload.valor === "number"
-        ? payload.valor
-        : typeof paymentObj.value === "number"
-          ? paymentObj.value
-          : typeof dataObj.amount_paid === "number"
-            ? dataObj.amount_paid / 100
+      typeof payload["valor"] === "number"
+        ? payload["valor"]
+        : typeof paymentObj["value"] === "number"
+          ? paymentObj["value"]
+          : typeof dataObj["amount_paid"] === "number"
+            ? dataObj["amount_paid"] / 100
             : undefined;
 
     return {

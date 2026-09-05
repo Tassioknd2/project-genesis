@@ -110,6 +110,7 @@ export function CadastroPage() {
       }, 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [step, segundosParaReenvio]);
 
   // Validações em tempo real da senha
@@ -280,7 +281,7 @@ export function CadastroPage() {
       const profiles = await apiClient.getProfiles().catch(() => []);
       if (profiles && profiles.length > 0) {
         const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-        setCurrentProfile(primary);
+        setCurrentProfile(primary ?? null);
       }
 
       toast.success("E-mail verificado com sucesso!", {
@@ -303,7 +304,7 @@ export function CadastroPage() {
       const profiles = await apiClient.getProfiles();
       if (profiles && profiles.length > 0) {
         const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-        setCurrentProfile(primary);
+        setCurrentProfile(primary ?? null);
       }
     } catch {
       // fallback
@@ -777,7 +778,9 @@ export function CadastroPage() {
                     {codigoDigitos.map((digito, index) => (
                       <input
                         key={index}
-                        ref={(el) => (inputRefs.current[index] = el)}
+                        ref={(el) => {
+                          inputRefs.current[index] = el;
+                        }}
                         type="text"
                         inputMode="numeric"
                         maxLength={1}

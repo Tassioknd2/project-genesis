@@ -21,9 +21,9 @@ interface AuthContextType {
     nome: string;
     email: string;
     password: string;
-    role?: UserRole;
-    telefone?: string;
-    crm?: string;
+    role?: UserRole | undefined;
+    telefone?: string | undefined;
+    crm?: string | undefined;
   }) => Promise<UserSafeProfile>;
   loginWithGoogle: (credential: string, role?: UserRole) => Promise<UserSafeProfile>;
   sendVerificationCode: (
@@ -144,10 +144,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!isMultiPerfil || profiles.length === 1) {
           const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-          setCurrentProfileState(primary);
+          setCurrentProfileState(primary ?? null);
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem(AUTH_PROFILE_KEY, JSON.stringify(primary));
+              localStorage.setItem(AUTH_PROFILE_KEY, JSON.stringify(primary ?? null));
             } catch {
               // fallback
             }
@@ -190,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if ((!isMultiPerfil || profiles.length === 1) && profiles.length > 0) {
             const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-            setCurrentProfile(primary);
+            setCurrentProfile(primary ?? null);
           }
         } catch {
           // fallback
@@ -209,9 +209,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       nome: string;
       email: string;
       password: string;
-      role?: UserRole;
-      telefone?: string;
-      crm?: string;
+      role?: UserRole | undefined;
+      telefone?: string | undefined;
+      crm?: string | undefined;
     }): Promise<UserSafeProfile> => {
       setIsLoading(true);
       try {
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSubscriptionSummary(sub);
           if (profiles.length > 0) {
             const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-            setCurrentProfile(primary);
+            setCurrentProfile(primary ?? null);
           }
         } catch {
           // fallback
@@ -264,7 +264,7 @@ try {
 
           if ((!isMultiPerfil || profiles.length === 1) && profiles.length > 0) {
             const primary = profiles.find((p) => p.isPrimary) || profiles[0];
-            setCurrentProfile(primary);
+            setCurrentProfile(primary ?? null);
           }
         } catch {
           // fallback

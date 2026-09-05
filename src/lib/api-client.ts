@@ -23,11 +23,11 @@ import {
 
 export interface ApiResponse<T> {
   success: boolean;
-  data?: T;
+  data?: T | undefined;
   error?: {
     code: string;
     message: string;
-    details?: unknown;
+    details?: unknown | undefined;
   };
 }
 
@@ -134,9 +134,9 @@ class ApiClient {
     nome: string;
     email: string;
     password: string;
-    role?: UserRole;
-    telefone?: string;
-    crm?: string;
+    role?: UserRole | undefined;
+    telefone?: string | undefined;
+    crm?: string | undefined;
   }): Promise<AuthSessionResponse> {
     const res = await this.request<AuthSessionResponse>("/api/auth/register", {
       method: "POST",
@@ -155,7 +155,7 @@ class ApiClient {
 
   async loginWithGoogle(payload: {
     credential: string;
-    role?: UserRole;
+    role?: UserRole | undefined;
   }): Promise<AuthSessionResponse> {
     const res = await this.request<AuthSessionResponse>("/api/auth/google", {
       method: "POST",
@@ -240,11 +240,11 @@ class ApiClient {
   // --- Agenda & Agendamentos ---
 
   async getAgenda(query?: {
-    date?: string;
-    status?: string;
-    search?: string;
-    tipo?: string;
-    categoria?: "consulta" | "exame";
+    date?: string | undefined;
+    status?: string | undefined;
+    search?: string | undefined;
+    tipo?: string | undefined;
+    categoria?: "consulta" | "exame" | undefined;
   }): Promise<{
     date: string;
     appointments: Appointment[];
@@ -269,11 +269,11 @@ class ApiClient {
     data: string;
     hora: string;
     tipo: TipoAtendimento;
-    duracaoMin?: number;
-    medico?: string;
+    duracaoMin?: number | undefined;
+    medico?: string | undefined;
     paciente: { id: string } | Omit<Patient, "id">;
-    observacoes?: string;
-    etiquetas?: Etiqueta[];
+    observacoes?: string | undefined;
+    etiquetas?: Etiqueta[] | undefined;
   }): Promise<Appointment> {
     return this.request<Appointment>("/api/appointments", {
       method: "POST",

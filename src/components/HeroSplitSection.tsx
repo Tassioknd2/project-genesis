@@ -77,6 +77,7 @@ export function HeroSplitSection() {
       }, 1000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [etapaOtp, contagemReenvio]);
 
   // Formatação amigável de telefone brasileiro
