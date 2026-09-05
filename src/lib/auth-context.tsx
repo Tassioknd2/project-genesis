@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       role?: UserRole | undefined;
       telefone?: string | undefined;
-      crm?: string;
+      crm?: string | undefined;
     }): Promise<UserSafeProfile> => {
       setIsLoading(true);
       try {
