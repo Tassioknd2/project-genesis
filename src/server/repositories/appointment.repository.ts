@@ -1,183 +1,98 @@
-import { Appointment, AppointmentStatus, Patient } from "../domain/types";
+import {
+  Appointment,
+  AppointmentStatus,
+  Etiqueta,
+  Patient,
+  PendenciaType,
+  TipoAtendimento,
+} from "../domain/types";
 import { isOverlapping } from "../domain/state-machine";
 import { NotFoundError } from "../domain/errors";
-import { patientRepository } from "./patient.repository";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Tables } from "@/integrations/supabase/types";
 
-function getTodayIso(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+type AppointmentRow = Tables<"appointments">;
+type PatientRow = Tables<"patients">;
+
+function rowToPatient(row: PatientRow): Patient {
+  return {
+    id: row.id,
+    nome: row.nome,
+    idade: row.idade,
+    telefone: row.telefone,
+    convenio: row.convenio,
+    ...(row.cpf != null ? { cpf: row.cpf } : {}),
+    ...(row.email != null ? { email: row.email } : {}),
+    ...(row.ultima_visita != null ? { ultimaVisita: row.ultima_visita } : {}),
+    ...(row.observacoes != null ? { observacoes: row.observacoes } : {}),
+    ...(row.criado_em != null ? { criadoEm: row.criado_em } : {}),
+  };
 }
 
+type AppointmentJoinRow = AppointmentRow & { paciente: PatientRow | null };
+
+function rowToAppointment(row: AppointmentJoinRow): Appointment {
+  const paciente: Patient = row.paciente
+    ? rowToPatient(row.paciente)
+    : {
+        id: row.paciente_id,
+        nome: "Paciente removido",
+        idade: 0,
+        telefone: "",
+        convenio: "",
+      };
+
+  return {
+    id: row.id,
+    data: row.data,
+    hora: row.hora,
+    duracaoMin: row.duracao_min,
+    paciente,
+    tipo: row.tipo as TipoAtendimento,
+    ...(row.tipos != null ? { tipos: row.tipos as TipoAtendimento[] } : {}),
+    medico: row.medico,
+    status: row.status as AppointmentStatus,
+    ...(row.pendencia != null ? { pendencia: row.pendencia as PendenciaType } : {}),
+    ...(row.observacoes != null ? { observacoes: row.observacoes } : {}),
+    ...(row.notas != null ? { notas: row.notas } : {}),
+    ...(row.etiquetas != null ? { etiquetas: row.etiquetas as unknown as Etiqueta[] } : {}),
+    criadoEm: row.criado_em,
+    atualizadoEm: row.atualizado_em,
+  };
+}
+
+const SELECT_WITH_PATIENT = "*, paciente:patients(*)";
+
 export class AppointmentRepository {
-  private appointments: Map<string, Appointment> = new Map();
-  private initialized = false;
-
-  constructor() {
-    this.initSeedData();
-  }
-
-  private async initSeedData() {
-    if (this.initialized) return;
-    this.initialized = true;
-
-    const today = getTodayIso();
-    const now = new Date().toISOString();
-
-    const p = await patientRepository.findAll();
-    const p1 = p.find((x) => x.id === "p1") || p[0]!;
-    const p2 = p.find((x) => x.id === "p2") || p[1]!;
-    const p3 = p.find((x) => x.id === "p3") || p[2]!;
-    const p4 = p.find((x) => x.id === "p4") || p[3]!;
-    const p5 = p.find((x) => x.id === "p5") || p[4]!;
-    const p6 = p.find((x) => x.id === "p6") || p[5]!;
-    const p7 = p.find((x) => x.id === "p7") || p[6]!;
-    const p8 = p.find((x) => x.id === "p8") || p[7]!;
-    const p9 = p.find((x) => x.id === "p9") || p[8]!;
-    const p10 = p.find((x) => x.id === "p10") || p[9]!;
-
-    const seed: Omit<Appointment, "criadoEm" | "atualizadoEm">[] = [
-      {
-        id: "a1",
-        data: today,
-        hora: "08:00",
-        duracaoMin: 30,
-        paciente: p1,
-        tipo: "Eletrocardiograma",
-        medico: "Dr. Carlos Mendes",
-        status: "concluido",
-      },
-      {
-        id: "a2",
-        data: today,
-        hora: "08:30",
-        duracaoMin: 45,
-        paciente: p8,
-        tipo: "Ecocardiograma",
-        medico: "Dr. Carlos Mendes",
-        status: "confirmado",
-      },
-      {
-        id: "a3",
-        data: today,
-        hora: "09:15",
-        duracaoMin: 60,
-        paciente: p9,
-        tipo: "Consulta",
-        tipos: ["Consulta", "Eletrocardiograma"],
-        medico: "Dr. Carlos Mendes",
-        status: "confirmado",
-      },
-      {
-        id: "a4",
-        data: today,
-        hora: "09:45",
-        duracaoMin: 30,
-        paciente: p2,
-        tipo: "Teste ergométrico",
-        medico: "Dr. Carlos Mendes",
-        status: "aguardando",
-        pendencia: "sem_resposta",
-      },
-      {
-        id: "a5",
-        data: today,
-        hora: "10:30",
-        duracaoMin: 50,
-        paciente: p3,
-        tipo: "Teste ergométrico",
-        medico: "Dr. Carlos Mendes",
-        status: "agendado",
-      },
-      {
-        id: "a6",
-        data: today,
-        hora: "11:00",
-        duracaoMin: 30,
-        paciente: p4,
-        tipo: "Retorno",
-        medico: "Dr. Carlos Mendes",
-        status: "recusado",
-        pendencia: "recusado",
-      },
-      {
-        id: "a7",
-        data: today,
-        hora: "13:30",
-        duracaoMin: 40,
-        paciente: p5,
-        tipo: "Holter 24h",
-        medico: "Dr. Carlos Mendes",
-        status: "falha_envio",
-        pendencia: "falha_envio",
-      },
-      {
-        id: "a8",
-        data: today,
-        hora: "14:30",
-        duracaoMin: 30,
-        paciente: p10,
-        tipo: "MAPA",
-        medico: "Dr. Carlos Mendes",
-        status: "aguardando",
-        pendencia: "sem_resposta",
-      },
-      {
-        id: "a9",
-        data: today,
-        hora: "15:00",
-        duracaoMin: 30,
-        paciente: p6,
-        tipo: "Consulta",
-        medico: "Dr. Carlos Mendes",
-        status: "confirmado",
-      },
-      {
-        id: "a10",
-        data: today,
-        hora: "16:30",
-        duracaoMin: 30,
-        paciente: p7,
-        tipo: "Consulta",
-        medico: "Dr. Carlos Mendes",
-        status: "falta",
-      },
-    ];
-
-    for (const item of seed) {
-      this.appointments.set(item.id, {
-        ...item,
-        criadoEm: now,
-        atualizadoEm: now,
-      });
-    }
-  }
-
   async findById(id: string): Promise<Appointment | null> {
-    const item = this.appointments.get(id);
-    return item ? { ...item } : null;
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .select(SELECT_WITH_PATIENT)
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToAppointment(data as AppointmentJoinRow) : null;
   }
 
   async findByDate(date: string): Promise<Appointment[]> {
-    const results: Appointment[] = [];
-    for (const item of this.appointments.values()) {
-      if (item.data === date) {
-        results.push({ ...item });
-      }
-    }
-    return results.sort((a, b) => a.hora.localeCompare(b.hora));
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .select(SELECT_WITH_PATIENT)
+      .eq("data", date)
+      .order("hora", { ascending: true });
+    if (error) throw error;
+    return ((data || []) as AppointmentJoinRow[]).map(rowToAppointment);
   }
 
   async findByPatientId(patientId: string): Promise<Appointment[]> {
-    const results: Appointment[] = [];
-    for (const item of this.appointments.values()) {
-      if (item.paciente.id === patientId) {
-        results.push({ ...item });
-      }
-    }
-    return results.sort((a, b) => b.data.localeCompare(a.data) || b.hora.localeCompare(a.hora));
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .select(SELECT_WITH_PATIENT)
+      .eq("paciente_id", patientId)
+      .order("data", { ascending: false })
+      .order("hora", { ascending: false });
+    if (error) throw error;
+    return ((data || []) as AppointmentJoinRow[]).map(rowToAppointment);
   }
 
   /**
@@ -205,32 +120,68 @@ export class AppointmentRepository {
 
   async create(appointment: Omit<Appointment, "criadoEm" | "atualizadoEm">): Promise<Appointment> {
     const now = new Date().toISOString();
-    const full: Appointment = {
-      ...appointment,
-      criadoEm: now,
-      atualizadoEm: now,
-    };
-    this.appointments.set(full.id, full);
-    return { ...full };
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .insert({
+        id: appointment.id,
+        data: appointment.data,
+        hora: appointment.hora,
+        duracao_min: appointment.duracaoMin,
+        paciente_id: appointment.paciente.id,
+        tipo: appointment.tipo,
+        tipos: appointment.tipos ?? null,
+        medico: appointment.medico,
+        status: appointment.status,
+        pendencia: appointment.pendencia ?? null,
+        observacoes: appointment.observacoes ?? null,
+        notas: appointment.notas ?? null,
+        etiquetas: appointment.etiquetas
+          ? (JSON.parse(JSON.stringify(appointment.etiquetas)) as Tables<"appointments">["Insert"]["etiquetas"])
+          : null,
+        criado_em: now,
+        atualizado_em: now,
+      })
+      .select(SELECT_WITH_PATIENT)
+      .single();
+    if (error) throw error;
+    return rowToAppointment(data as AppointmentJoinRow);
   }
 
   async update(id: string, updates: Partial<Appointment>): Promise<Appointment> {
-    const existing = this.appointments.get(id);
-    if (!existing) {
-      throw new NotFoundError("Agendamento", id);
+    const patch: Record<string, unknown> = {};
+    if (updates.data !== undefined) patch["data"] = updates.data;
+    if (updates.hora !== undefined) patch["hora"] = updates.hora;
+    if (updates.duracaoMin !== undefined) patch["duracao_min"] = updates.duracaoMin;
+    if (updates.tipo !== undefined) patch["tipo"] = updates.tipo;
+    if ("tipos" in updates) patch["tipos"] = updates.tipos ?? null;
+    if (updates.medico !== undefined) patch["medico"] = updates.medico;
+    if (updates.status !== undefined) patch["status"] = updates.status;
+    if ("pendencia" in updates) patch["pendencia"] = updates.pendencia ?? null;
+    if ("observacoes" in updates) patch["observacoes"] = updates.observacoes ?? null;
+    if ("notas" in updates) patch["notas"] = updates.notas ?? null;
+    if ("etiquetas" in updates) {
+      patch["etiquetas"] = updates.etiquetas ? JSON.parse(JSON.stringify(updates.etiquetas)) : null;
     }
-    const updated: Appointment = {
-      ...existing,
-      ...updates,
-      id, // imutável
-      atualizadoEm: new Date().toISOString(),
-    };
-    this.appointments.set(id, updated);
-    return { ...updated };
+    if (updates.paciente) patch["paciente_id"] = updates.paciente.id;
+
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .update(patch)
+      .eq("id", id)
+      .select(SELECT_WITH_PATIENT)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new NotFoundError("Agendamento", id);
+    return rowToAppointment(data as AppointmentJoinRow);
   }
 
   async delete(id: string): Promise<boolean> {
-    return this.appointments.delete(id);
+    const { error, count } = await supabaseAdmin
+      .from("appointments")
+      .delete({ count: "exact" })
+      .eq("id", id);
+    if (error) throw error;
+    return (count ?? 0) > 0;
   }
 }
 
