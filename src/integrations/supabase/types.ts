@@ -14,7 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          data: string
+          duracao_min: number
+          etiquetas: Json | null
+          hora: string
+          id: string
+          medico: string
+          notas: string[] | null
+          observacoes: string | null
+          paciente_id: string
+          pendencia: string | null
+          status: string
+          tipo: string
+          tipos: string[] | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          data: string
+          duracao_min?: number
+          etiquetas?: Json | null
+          hora: string
+          id: string
+          medico: string
+          notas?: string[] | null
+          observacoes?: string | null
+          paciente_id: string
+          pendencia?: string | null
+          status?: string
+          tipo: string
+          tipos?: string[] | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          data?: string
+          duracao_min?: number
+          etiquetas?: Json | null
+          hora?: string
+          id?: string
+          medico?: string
+          notas?: string[] | null
+          observacoes?: string | null
+          paciente_id?: string
+          pendencia?: string | null
+          status?: string
+          tipo?: string
+          tipos?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          atualizado_em: string
+          convenio: string
+          cpf: string | null
+          criado_em: string
+          data_nascimento: string | null
+          email: string | null
+          id: string
+          idade: number
+          nome: string
+          observacoes: string | null
+          telefone: string
+          ultima_visita: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          convenio: string
+          cpf?: string | null
+          criado_em?: string
+          data_nascimento?: string | null
+          email?: string | null
+          id: string
+          idade: number
+          nome: string
+          observacoes?: string | null
+          telefone: string
+          ultima_visita?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          convenio?: string
+          cpf?: string | null
+          criado_em?: string
+          data_nascimento?: string | null
+          email?: string | null
+          id?: string
+          idade?: number
+          nome?: string
+          observacoes?: string | null
+          telefone?: string
+          ultima_visita?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
