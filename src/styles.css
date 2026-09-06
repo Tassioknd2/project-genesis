@@ -350,3 +350,304 @@
   background-color: var(--tag-cinza-bg);
   color: var(--tag-cinza-fg);
 }
+
+/* Motion Loop Keyframes: Total 10s cycle for the Hero Postal Card Stage */
+@keyframes heroLoopProgress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes stepIndicator1 {
+  0%, 36% { background-color: #3e6748; color: #ffffff; border-color: #3e6748; }
+  37%, 100% { background-color: transparent; color: #6B5A4E; border-color: #E5DCBA; }
+}
+@keyframes stepIndicator2 {
+  0%, 25% { background-color: transparent; color: #6B5A4E; border-color: #E5DCBA; }
+  26%, 50% { background-color: #3e6748; color: #ffffff; border-color: #3e6748; }
+  51%, 100% { background-color: transparent; color: #6B5A4E; border-color: #E5DCBA; }
+}
+@keyframes stepIndicator3 {
+  0%, 49% { background-color: transparent; color: #6B5A4E; border-color: #E5DCBA; }
+  50%, 98% { background-color: #3e6748; color: #ffffff; border-color: #3e6748; }
+  99%, 100% { background-color: transparent; color: #6B5A4E; border-color: #E5DCBA; }
+}
+
+@keyframes motionHeroWhatsapp {
+  0%, 2% { opacity: 0; transform: translateY(18px) scale(0.96); pointer-events: none; }
+  6%, 42% { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  46%, 49% { opacity: 0.8; transform: translateY(-8px) scale(0.97); }
+  52%, 96% { opacity: 0; transform: translateY(-16px) scale(0.94); pointer-events: none; }
+  100% { opacity: 0; transform: translateY(18px) scale(0.96); pointer-events: none; }
+}
+
+@keyframes motionHeroCursor {
+  0%, 8% { opacity: 0; transform: translate(140px, 160px) scale(1); }
+  15% { opacity: 1; transform: translate(60px, 70px) scale(1); }
+  25%, 28% { opacity: 1; transform: translate(12px, 35px) scale(0.85); }
+  32% { opacity: 0; transform: translate(12px, 35px) scale(1.2); }
+  100% { opacity: 0; transform: translate(140px, 160px); }
+}
+
+@keyframes motionHeroBtnConfirm {
+  0%, 26% { transform: scale(1); box-shadow: 0 4px 12px rgba(37,211,102,0.25); filter: brightness(1); }
+  27%, 30% { transform: scale(0.95); box-shadow: 0 0 0 8px rgba(37,211,102,0.45); filter: brightness(1.15); }
+  32%, 48% { transform: scale(1); background-color: #128C7E; }
+  52%, 100% { transform: scale(1); }
+}
+
+@keyframes motionHeroFeedbackToast {
+  0%, 28% { opacity: 0; transform: translateY(10px) scale(0.92); }
+  32%, 46% { opacity: 1; transform: translateY(0) scale(1); }
+  50%, 100% { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
+
+@keyframes motionHeroDashboard {
+  0%, 46% { opacity: 0; transform: scale(0.97) translateY(12px); pointer-events: none; }
+  52%, 95% { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+  98%, 100% { opacity: 0; transform: scale(0.98) translateY(6px); pointer-events: none; }
+}
+
+@keyframes motionHeroPendingTag {
+  0%, 54% { opacity: 1; transform: scale(1); }
+  58%, 100% { opacity: 0; transform: scale(0.8); display: none; }
+}
+
+@keyframes motionHeroConfirmedTag {
+  0%, 57% { opacity: 0; transform: scale(0.75); }
+  63%, 95% { opacity: 1; transform: scale(1); }
+  98%, 100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes motionHeroCardHighlight {
+  0%, 55% { border-left-color: #B4691B; box-shadow: 0 2px 8px rgba(0,0,0,0.04); background-color: #ffffff; }
+  62%, 93% { border-left-color: #3e6748; box-shadow: 0 8px 30px rgba(62,103,72,0.18); background-color: #FDFBF7; }
+  98%, 100% { border-left-color: #B4691B; box-shadow: 0 2px 8px rgba(0,0,0,0.04); background-color: #ffffff; }
+}
+
+@keyframes motionHeroSyncPill {
+  0%, 57% { opacity: 0; transform: translateY(-6px); }
+  64%, 93% { opacity: 1; transform: translateY(0); }
+  98%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.anim-hero-loop-bar { animation: heroLoopProgress 10s infinite linear; }
+.anim-step-1 { animation: stepIndicator1 10s infinite; }
+.anim-step-2 { animation: stepIndicator2 10s infinite; }
+.anim-step-3 { animation: stepIndicator3 10s infinite; }
+.anim-hero-wa { animation: motionHeroWhatsapp 10s infinite cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-hero-cursor { animation: motionHeroCursor 10s infinite ease-in-out; }
+.anim-hero-btn { animation: motionHeroBtnConfirm 10s infinite ease-out; }
+.anim-hero-feedback { animation: motionHeroFeedbackToast 10s infinite cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-hero-dash { animation: motionHeroDashboard 10s infinite cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-hero-pending { animation: motionHeroPendingTag 10s infinite ease-out forwards; }
+.anim-hero-confirmed { animation: motionHeroConfirmedTag 10s infinite cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.anim-hero-card-glow { animation: motionHeroCardHighlight 10s infinite ease-out; }
+.anim-hero-sync { animation: motionHeroSyncPill 10s infinite ease-out; }
+
+/* Micro-interaction & Motion Curves from Mockup */
+@keyframes buttonShimmer {
+  0% { transform: translateX(-100%) rotate(25deg); }
+  100% { transform: translateX(200%) rotate(25deg); }
+}
+.btn-shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 80%
+  );
+  transform: translateX(-100%) rotate(25deg);
+  animation: buttonShimmer 4s infinite linear;
+  pointer-events: none;
+}
+
+/* Subtle Heartbeat Pulse on ECG Stroke */
+@keyframes ecgPulse {
+  0%, 100% { opacity: 0.3; stroke-dashoffset: 0; }
+  50% { opacity: 0.8; stroke-dashoffset: 12; }
+}
+.anim-ecg-path {
+  stroke-dasharray: 8 4;
+  animation: ecgPulse 3.5s ease-in-out infinite;
+}
+
+/* WhatsApp Typing Simulation Dots */
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+.typing-dot-1 { animation: typingBounce 1.4s infinite ease-in-out; }
+.typing-dot-2 { animation: typingBounce 1.4s infinite ease-in-out 0.2s; }
+.typing-dot-3 { animation: typingBounce 1.4s infinite ease-in-out 0.4s; }
+
+/* Interactive Ripple Glow */
+@keyframes rippleGlow {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.35); opacity: 0.2; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.anim-ripple-pulse {
+  animation: rippleGlow 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+/* Progress bar fill for stats */
+@keyframes fillProgress {
+  from { width: 0%; }
+  to { width: 94.8%; }
+}
+.anim-fill-94 {
+  animation: fillProgress 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Benefit Cards Typewriter & Status Animations */
+@keyframes typingNoteText {
+  0%, 15% { width: 0; }
+  45%, 70% { width: 100%; }
+  85%, 100% { width: 100%; }
+}
+@keyframes noteBlinkCursor {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: #8E3E1E; }
+}
+@keyframes noteCardCycle {
+  0%, 48% { opacity: 0; transform: translateY(6px) scale(0.98); pointer-events: none; max-height: 0; margin-top: 0; overflow: hidden; }
+  54%, 94% { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; max-height: 80px; margin-top: 8px; }
+  98%, 100% { opacity: 0; transform: translateY(-4px); max-height: 0; margin-top: 0; }
+}
+@keyframes noteBtnClick {
+  0%, 45% { transform: scale(1); background-color: #702808; }
+  48% { transform: scale(0.92); background-color: #3e6748; }
+  52%, 94% { transform: scale(1); background-color: #3e6748; }
+  100% { transform: scale(1); background-color: #702808; }
+}
+.anim-typewriter-note {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid #8E3E1E;
+  animation: typingNoteText 6s cubic-bezier(0.4, 0, 0.2, 1) infinite, noteBlinkCursor 0.8s infinite;
+}
+.anim-note-badge {
+  animation: noteCardCycle 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.anim-save-btn {
+  animation: noteBtnClick 6s ease-in-out infinite;
+}
+
+@keyframes simulatedHandTap {
+  0% { transform: translate(40px, 40px) scale(1.1); opacity: 0; }
+  20%, 35% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  40% { transform: translate(0px, 0px) scale(0.85); }
+  45% { transform: translate(0px, 0px) scale(1); }
+  65% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  85%, 100% { transform: translate(20px, 20px) scale(0.9); opacity: 0; }
+}
+@keyframes tapShockwave {
+  0% { transform: scale(0.4); opacity: 0.9; box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  50% { transform: scale(1.5); opacity: 0.6; box-shadow: 0 0 24px 8px rgba(37, 211, 102, 0.4); }
+  100% { transform: scale(2.2); opacity: 0; box-shadow: 0 0 40px 14px rgba(37, 211, 102, 0); }
+}
+@keyframes stepGlowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(62, 103, 72, 0.4), 0 0 12px rgba(62, 103, 72, 0.2); }
+  50% { box-shadow: 0 0 0 4px rgba(62, 103, 72, 0.2), 0 0 20px rgba(62, 103, 72, 0.4); }
+}
+@keyframes syncFlyBadge {
+  0% { transform: translateY(12px) scale(0.95); opacity: 0; }
+  15%, 85% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-8px) scale(0.98); opacity: 0; }
+}
+.anim-step-glow {
+  animation: stepGlowPulse 2s ease-in-out infinite;
+}
+.anim-tap-finger {
+  animation: simulatedHandTap 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+.anim-shockwave {
+  animation: tapShockwave 1.8s ease-out infinite;
+}
+.anim-sync-fly {
+  animation: syncFlyBadge 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Motion transitions for WhatsApp button morph and system status change */
+@keyframes badgeStatusFlip {
+  0% {
+    transform: perspective(400px) rotateX(90deg);
+    opacity: 0;
+  }
+  60% {
+    transform: perspective(400px) rotateX(-10deg);
+    opacity: 1;
+  }
+  80% {
+    transform: perspective(400px) rotateX(5deg);
+  }
+  100% {
+    transform: perspective(400px) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlowConfirmed {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(62, 103, 72, 0.4),
+      0 0 0 1px rgba(62, 103, 72, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(62, 103, 72, 0.15),
+      0 0 16px rgba(62, 103, 72, 0.3);
+  }
+}
+
+.anim-badge-flip {
+  animation: badgeStatusFlip 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.anim-confirmed-glow {
+  animation: pulseGlowConfirmed 2s ease-in-out infinite;
+}
+
+/* Motion transitions for Monthly Agenda hover loop */
+@keyframes cursorGlidePulse {
+  0%, 100% {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 8px 16px rgba(142, 62, 30, 0.35));
+  }
+}
+
+@keyframes dayCellPop {
+  0% {
+    transform: scale(0.92);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.anim-cursor-glide {
+  animation: cursorGlidePulse 2s ease-in-out infinite;
+  transition: top 0.6s cubic-bezier(0.25, 1, 0.5, 1), left 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.anim-day-pop {
+  animation: dayCellPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+

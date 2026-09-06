@@ -205,6 +205,25 @@ export function DesktopAppHeader({
         {/* Ações e Navegação Desktop */}
         <div className="flex items-center gap-3">
           <Link
+            to="/agenda"
+            aria-label="Acessar agenda clínica diária"
+            className={cn(
+              "inline-flex h-9.5 items-center gap-2 rounded-xl border px-3.5 font-mono text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95",
+              pathname === "/agenda"
+                ? "border-ink bg-ink text-cream shadow-xs"
+                : "border-line2/80 bg-card text-ink shadow-2xs hover:border-amber/60 hover:bg-paper hover:text-amberdeep",
+            )}
+          >
+            <CalendarIcon
+              className={cn(
+                "size-4 shrink-0 transition-colors",
+                pathname === "/agenda" ? "text-amber" : "text-amberdeep",
+              )}
+            />
+            <span>Agenda</span>
+          </Link>
+
+          <Link
             to="/pacientes"
             aria-label="Acessar diretório de pacientes"
             className={cn(
