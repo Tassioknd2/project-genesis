@@ -23,11 +23,11 @@ export interface Patient {
   id: string;
   nome: string;
   idade: number;
-  dataNascimento?: string;
+  dataNascimento?: string | undefined;
   telefone: string;
   convenio: string; // "Particular" quando particular
-  ultimaVisita?: string;
-  observacoes?: string;
+  ultimaVisita?: string | undefined;
+  observacoes?: string | undefined;
 }
 
 export function isPendencia(a: Appointment): boolean {
