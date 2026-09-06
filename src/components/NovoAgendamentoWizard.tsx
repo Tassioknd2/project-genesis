@@ -50,8 +50,8 @@ export interface NovoAgendamentoDraft {
 interface NovoAgendamentoWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  dataInicial?: Date;
-  pacienteInicial?: Patient | null;
+  dataInicial?: Date | undefined;
+  pacienteInicial?: Patient | null | undefined;
   onSalvar: (draft: NovoAgendamentoDraft) => void;
 }
 

@@ -167,7 +167,7 @@ function PacientesPage() {
       <NovoAgendamentoWizard
         open={wizardAberto}
         onOpenChange={setWizardAberto}
-        pacientePreSelecionado={pacienteParaAgendar ?? undefined}
+        pacienteInicial={pacienteParaAgendar ?? undefined}
         onSalvar={handleSalvarDraft}
       />
     </div>

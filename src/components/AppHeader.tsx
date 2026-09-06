@@ -1,14 +1,14 @@
-import { DesktopAppHeader, type DesktopAppHeaderProps } from "./desktop/DesktopAppHeader";
-import { MobileAppHeader, type MobileAppHeaderProps } from "./mobile/MobileAppHeader";
+import { DesktopAppHeader } from "./desktop/DesktopAppHeader";
+import { MobileAppHeader } from "./mobile/MobileAppHeader";
 import type { NovoAgendamentoDraft } from "./NovoAgendamentoWizard";
 import type { Appointment } from "@/lib/agenda-data";
 
 export interface AppHeaderProps {
-  selectedDate?: Date;
-  onSelectDate?: (date: Date) => void;
-  onNovoAgendamento?: (draft: NovoAgendamentoDraft) => void;
+  selectedDate?: Date | undefined;
+  onSelectDate?: ((date: Date) => void) | undefined;
+  onNovoAgendamento?: ((draft: NovoAgendamentoDraft) => void) | undefined;
   /** Resolve a agenda de uma data (inclui alterações feitas na sessão). */
-  agendaDoDia?: (iso: string) => Appointment[];
+  agendaDoDia?: ((iso: string) => Appointment[]) | undefined;
 }
 
 export function AppHeader({

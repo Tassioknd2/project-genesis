@@ -4,9 +4,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Appointment } from "@/lib/agenda-data";
 
 export interface MobileAppHeaderProps {
-  selectedDate?: Date;
-  onSelectDate?: (date: Date) => void;
-  agendaDoDia?: (iso: string) => Appointment[];
+  selectedDate?: Date | undefined;
+  onSelectDate?: ((date: Date) => void) | undefined;
+  agendaDoDia?: ((iso: string) => Appointment[]) | undefined;
 }
 
 export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
