@@ -6,6 +6,7 @@ import {
   ChevronRight,
   HeartPulse,
   LogOut,
+  MessageSquare,
   Plus,
   User,
   Users,
@@ -251,6 +252,26 @@ export function DesktopAppHeader({
               )}
             />
             <span>Pacientes</span>
+          </Link>
+
+          <Link
+            to="/whatsapp"
+            aria-label="Acessar automação de WhatsApp"
+            className={cn(
+              "inline-flex h-9.5 items-center gap-2 rounded-xl border px-3.5 font-mono text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95",
+              pathname === "/whatsapp"
+                ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                : "border-line2/80 bg-card text-ink shadow-2xs hover:border-emerald-600/60 hover:bg-paper hover:text-emerald-700",
+            )}
+          >
+            <MessageSquare
+              className={cn(
+                "size-4 shrink-0 transition-colors",
+                pathname === "/whatsapp" ? "text-white" : "text-emerald-600",
+              )}
+            />
+            <span>WhatsApp</span>
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
           </Link>
 
           <ThemeToggle />

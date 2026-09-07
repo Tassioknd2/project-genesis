@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { AlertTriangle, CalendarDays, Plus, Users } from "lucide-react";
+import { AlertTriangle, CalendarDays, MessageSquare, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface MobileBottomNavProps {
@@ -95,6 +95,23 @@ export function MobileBottomNav({
         >
           <Users className="size-5" />
           <span>Pacientes</span>
+        </Link>
+
+        {/* WhatsApp */}
+        <Link
+          to="/whatsapp"
+          className={cn(
+            "flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-xl py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors active:scale-95",
+            pathname === "/whatsapp"
+              ? "text-emerald-600 font-bold"
+              : "text-inksoft hover:text-emerald-700",
+          )}
+        >
+          <div className="relative">
+            <MessageSquare className="size-5" />
+            <span className="absolute -top-1 -right-1 size-2 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+          <span>WhatsApp</span>
         </Link>
       </div>
     </nav>

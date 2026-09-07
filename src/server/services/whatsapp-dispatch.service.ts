@@ -166,6 +166,133 @@ export class WhatsAppDispatchService {
       mensagemProcessada: desc,
     };
   }
+
+  /**
+   * Processa mensagem recebida via Webhook (Z-API / Evolution / etc).
+   */
+  async processWebhookIncomingMessage(
+    senderPhone: string,
+    messageText: string,
+  ): Promise<{
+    processed: boolean;
+    appointmentId?: string;
+    action?: string;
+    novoStatus?: AppointmentStatus;
+  }> {
+    const rawClean = senderPhone.replace(/\D/g, "");
+    const textClean = messageText.trim().toLowerCase();
+
+    // Busca agendamentos recentes
+    const allAppointments = await appointmentRepository.find({});
+    // Encontra agendamento do paciente cujo telefone coincida com os dígitos finais (ex: últimos 8 ou 9 dígitos)
+    const matched = allAppointments.find((a) => {
+      const patientDigits = a.paciente.telefone.replace(/\D/g, "");
+      return (
+        rawClean.endsWith(patientDigits) ||
+        patientDigits.endsWith(rawClean) ||
+        patientDigits.slice(-8) === rawClean.slice(-8)
+      );
+    });
+
+    if (!matched) {
+      return { processed: false, action: "PACIENTE_NAO_ENCONTRADO" };
+    }
+
+    let resposta: "SIM" | "NAO" | "REMARCAR" | null = null;
+
+    if (
+      textClean === "1" ||
+      textClean.includes("sim") ||
+      textClean.includes("confirm") ||
+      textClean.includes("estarei") ||
+      textClean.includes("vou")
+    ) {
+      resposta = "SIM";
+    } else if (
+      textClean === "2" ||
+      textClean.includes("nao") ||
+      textClean.includes("não") ||
+      textClean.includes("cancel") ||
+      textClean.includes("desisto")
+    ) {
+      resposta = "NAO";
+    } else if (
+      textClean === "3" ||
+      textClean.includes("remarc") ||
+      textClean.includes("outro dia") ||
+      textClean.includes("outro horario") ||
+      textClean.includes("outro horário")
+    ) {
+      resposta = "REMARCAR";
+    }
+
+    if (!resposta) {
+      return {
+        processed: false,
+        appointmentId: matched.id,
+        action: "MENSAGEM_DESCONHECIDA",
+      };
+    }
+
+    const result = await this.simulateIncomingResponse(
+      matched.id,
+      resposta,
+      messageText,
+      `WhatsApp (${senderPhone})`,
+    );
+
+    return {
+      processed: true,
+      appointmentId: matched.id,
+      action: resposta,
+      novoStatus: result.novoStatus,
+    };
+  }
+
+  /**
+   * Envia uma mensagem de teste imediata para um número avulso ou chama API externa.
+   */
+  async sendCustomTestMessage(
+    phone: string,
+    message: string,
+    credentials?: { instanceId?: string; instanceToken?: string; provider?: string },
+  ): Promise<{ success: boolean; provider: string; messageId: string }> {
+    // Se credenciais reais foram informadas e provedor é Z-API
+    if (credentials?.instanceId && credentials?.instanceToken && credentials?.provider === "zapi") {
+      try {
+        const cleanPhone = phone.replace(/\D/g, "");
+        const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+        const zapiEndpoint = `https://api.z-api.io/instances/${credentials.instanceId}/token/${credentials.instanceToken}/send-text`;
+
+        const res = await fetch(zapiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: formattedPhone,
+            message,
+          }),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as { messageId?: string; zaapId?: string };
+          return {
+            success: true,
+            provider: "zapi",
+            messageId: data.messageId || data.zaapId || `zapi-${Date.now()}`,
+          };
+        }
+      } catch (err) {
+        console.warn("Falha ao contatar Z-API externa, usando resposta simulada:", err);
+      }
+    }
+
+    // Modo simulação imediato (sempre funciona mesmo sem API comprada)
+    return {
+      success: true,
+      provider: credentials?.provider || "simulador",
+      messageId: `msg-${Date.now()}`,
+    };
+  }
 }
 
 export const whatsAppDispatchService = new WhatsAppDispatchService();

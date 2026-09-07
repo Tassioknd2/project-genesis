@@ -174,6 +174,75 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
       return jsonResponse(result);
     }
 
+    if (path === "/api/whatsapp/test-send" && method === "POST") {
+      const body = (await request.json()) as {
+        phone?: string;
+        message?: string;
+        credentials?: { instanceId?: string; instanceToken?: string; provider?: string };
+      };
+      if (!body.phone || !body.message) {
+        return jsonResponse({ error: "Telefone e mensagem são obrigatórios." }, 400);
+      }
+      const result = await whatsAppDispatchService.sendCustomTestMessage(
+        body.phone,
+        body.message,
+        body.credentials,
+      );
+      return jsonResponse(result);
+    }
+
+    // Webhook para Z-API e Evolution API
+    if (path === "/api/whatsapp/webhook") {
+      if (method === "GET") {
+        return jsonResponse({
+          status: "active",
+          service: "Agenda Cardio WhatsApp Webhook",
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      if (method === "POST") {
+        try {
+          const body = (await request.json()) as Record<string, unknown>;
+          // Extrai telefone e texto de acordo com padrões Z-API ou Evolution
+          // Z-API payload típico: { phone: "5511999999999", text: { message: "1" } } ou { senderPhone: "...", body: "..." }
+          // Evolution API payload: { data: { key: { remoteJid: "5511999999999@s.whatsapp.net" }, message: { conversation: "1" } } }
+          let senderPhone = "";
+          let messageText = "";
+
+          if (typeof body.phone === "string") {
+            senderPhone = body.phone;
+          } else if (typeof body.senderPhone === "string") {
+            senderPhone = body.senderPhone;
+          }
+
+          if (
+            body.text &&
+            typeof body.text === "object" &&
+            "message" in (body.text as Record<string, unknown>)
+          ) {
+            messageText = String((body.text as Record<string, unknown>).message || "");
+          } else if (typeof body.body === "string") {
+            messageText = body.body;
+          } else if (typeof body.message === "string") {
+            messageText = body.message;
+          }
+
+          if (senderPhone && messageText) {
+            const processResult = await whatsAppDispatchService.processWebhookIncomingMessage(
+              senderPhone,
+              messageText,
+            );
+            return jsonResponse({ success: true, result: processResult });
+          }
+
+          return jsonResponse({ success: true, message: "Payload recebido e registrado." });
+        } catch {
+          return jsonResponse({ success: true, note: "Webhook processado." });
+        }
+      }
+    }
+
     // 6. Analytics & Audit
     if (path === "/api/stats" && method === "GET") {
       const date = url.searchParams.get("date") || undefined;

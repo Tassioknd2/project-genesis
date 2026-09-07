@@ -6,9 +6,12 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   HeartPulse,
+  HelpCircle,
   KeyRound,
   Lock,
   Mail,
@@ -272,22 +275,6 @@ function AuthPage() {
     }
   };
 
-  // Login com Google via Supabase OAuth
-  const handleGoogleAuth = async () => {
-    setIsSubmitting(true);
-    setSubmittingType("google");
-
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) {
-        toast.error(error);
-      }
-    } finally {
-      setIsSubmitting(false);
-      setSubmittingType(null);
-    }
-  };
-
   return (
     <div className="relative min-h-screen flex flex-col justify-between bg-[#FBF7F0] text-[#2C2018] antialiased selection:bg-[#8E3E1E]/20 selection:text-[#8E3E1E] dark:bg-[#16130f] dark:text-[#f3ede1]">
       {/* Background Decorativo Médico */}
@@ -410,42 +397,6 @@ function AuthPage() {
 
           {/* Corpo do Formulário */}
           <div className="p-6 sm:p-7">
-            {/* BOTÃO LOGIN COM CONTA GOOGLE (OAuth PKCE) */}
-            {(mode === "login" || mode === "register") && (
-              <div className="mb-5">
-                <button
-                  type="button"
-                  id="auth-google-button"
-                  onClick={handleGoogleAuth}
-                  disabled={isSubmitting}
-                  className="group relative flex w-full items-center justify-center gap-3 rounded-xl border border-[#E5DCBA] bg-white py-2.5 px-4 text-xs font-bold text-[#2C2018] shadow-xs transition-all duration-200 hover:border-[#8E3E1E]/40 hover:bg-[#FBF7F0] hover:shadow-sm active:scale-[0.99] disabled:opacity-60 dark:border-[#3a3528] dark:bg-[#252018] dark:text-[#f3ede1] dark:hover:bg-[#2e281e]"
-                >
-                  {isSubmitting && submittingType === "google" ? (
-                    <RefreshCw className="size-4 animate-spin text-[#8E3E1E] dark:text-[#d97750]" />
-                  ) : (
-                    <img
-                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                      alt="Google"
-                      className="size-4 shrink-0 transition-transform group-hover:scale-110"
-                      referrerPolicy="no-referrer"
-                    />
-                  )}
-                  <span>
-                    {mode === "login"
-                      ? "Entrar com a Conta Google"
-                      : "Cadastrar com a Conta Google"}
-                  </span>
-                </button>
-
-                <div className="relative my-4 flex items-center justify-center">
-                  <div className="w-full border-t border-[#E5DCBA] dark:border-[#3a3528]" />
-                  <span className="absolute bg-white px-3 text-[11px] font-medium text-[#968374] dark:bg-[#1f1b14] dark:text-[#7f7163]">
-                    ou continue com e-mail
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* CASO 1: FORMULÁRIO DE LOGIN */}
             {mode === "login" && (
               <form onSubmit={handleLogin} className="space-y-4">
@@ -698,22 +649,30 @@ function AuthPage() {
               </form>
             )}
 
-            {/* CASO 3: CONFIRMAÇÃO OBRIGATÓRIA DE E-MAIL */}
+            {/* CASO 3: CONFIRMAÇÃO DE E-MAIL */}
             {mode === "confirm_pending" && (
-              <div className="space-y-4 text-center">
-                <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#3E6748]/10 text-[#3E6748] dark:bg-[#3E6748]/20 dark:text-[#67a074]">
-                  <Mail className="size-7" />
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#3E6748]/10 text-[#3E6748] dark:bg-[#3E6748]/20 dark:text-[#67a074]">
+                    <Mail className="size-7" />
+                  </div>
+                  <h3 className="mt-3 text-base font-bold text-[#2C2018] dark:text-[#f3ede1]">
+                    Confirme seu E-mail
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-[#6B5A4E] dark:text-[#baa998]">
+                    Enviamos um link de ativação para{" "}
+                    <strong className="text-[#2C2018] dark:text-[#f3ede1]">
+                      {pendingEmail || "seu e-mail"}
+                    </strong>
+                    . Acesse sua caixa de entrada e clique no link para ativar seu acesso à Agenda
+                    Cardio.
+                  </p>
                 </div>
-                <h3 className="text-base font-bold text-[#2C2018] dark:text-[#f3ede1]">
-                  Confirme seu E-mail
-                </h3>
-                <p className="text-xs leading-relaxed text-[#6B5A4E] dark:text-[#baa998]">
-                  Enviamos uma mensagem com link de ativação para{" "}
-                  <strong className="text-[#2C2018] dark:text-[#f3ede1]">
-                    {pendingEmail || "seu e-mail"}
-                  </strong>
-                  . Acesse sua caixa de entrada para validar sua conta antes de entrar.
-                </p>
+
+                <div className="rounded-xl border border-[#E5DCBA] bg-[#FBF7F0]/80 p-3 text-center text-xs text-[#6B5A4E] dark:border-[#3a3528] dark:bg-[#201b15] dark:text-[#baa998]">
+                  Não encontrou a mensagem? Verifique também sua caixa de <strong>Spam</strong> ou{" "}
+                  <strong>Lixo eletrônico</strong>.
+                </div>
 
                 <div className="pt-2">
                   <button
@@ -735,7 +694,7 @@ function AuthPage() {
                   </button>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-1 text-center">
                   <button
                     type="button"
                     onClick={() => setMode("login")}

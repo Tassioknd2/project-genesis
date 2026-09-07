@@ -23,10 +23,11 @@ interface AuthContextType {
     password: string,
     nome: string,
   ) => Promise<{ error: string | null; needsEmailConfirmation: boolean }>;
-  signInWithGoogle: () => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null; providerNotConfigured?: boolean }>;
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: string | null }>;
+  activateWithUrlOrToken: (input: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -44,30 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (userId: string, userMetadata?: Record<string, unknown>) => {
       if (!isSupabaseConfigured) return;
       try {
-        // A tabela public.profiles pode não existir ainda no banco; por isso a
-        // consulta é feita de forma não tipada e falha silenciosamente.
-        const { data, error } = (await supabase
-          .from("profiles" as never)
+        const { data, error } = await supabase
+          .from("profiles")
           .select("id, nome, role, criado_em, atualizado_em")
           .eq("id", userId)
-          .maybeSingle()) as unknown as {
-          data: UserProfile | null;
-          error: { message: string } | null;
-        };
+          .maybeSingle();
 
         if (error) {
           console.warn("[Auth] Não foi possível carregar perfil do banco:", error.message);
         }
 
         if (data) {
-          setProfile(data);
+          setProfile(data as UserProfile);
         } else {
           // Perfil temporário seguro enquanto trigger no banco executa
           const metadataName =
-            typeof userMetadata?.["nome"] === "string"
-              ? userMetadata["nome"]
-              : typeof userMetadata?.["full_name"] === "string"
-                ? userMetadata["full_name"]
+            typeof userMetadata?.nome === "string"
+              ? userMetadata.nome
+              : typeof userMetadata?.full_name === "string"
+                ? userMetadata.full_name
                 : "Usuário Médico";
 
           setProfile({
@@ -93,7 +89,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let subscription: { unsubscribe: () => void } | null = null;
 
     try {
-      // 1. Obter sessão inicial
+      // 1. Detecta se a URL contém código PKCE (?code=) e faz a troca automática
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get("code");
+        if (authCode) {
+          supabase.auth
+            .exchangeCodeForSession(authCode)
+            .then(({ data, error }) => {
+              if (!isMounted) return;
+              if (error) {
+                console.warn("[Auth] Erro ao trocar código por sessão:", error.message);
+              } else if (data.session) {
+                setSession(data.session);
+                setUser(data.session.user);
+                if (data.session.user) {
+                  fetchProfile(data.session.user.id, data.session.user.user_metadata);
+                }
+                // Limpa o parâmetro code da URL
+                urlParams.delete("code");
+                const remaining = urlParams.toString();
+                const cleanUrl =
+                  window.location.pathname +
+                  (remaining ? `?${remaining}` : "") +
+                  window.location.hash;
+                window.history.replaceState({}, document.title, cleanUrl);
+              }
+            })
+            .catch((err) => console.warn("[Auth] Exceção ao trocar código:", err));
+        }
+      }
+
+      // 2. Obter sessão inicial
       supabase.auth
         .getSession()
         .then(({ data: { session: initialSession }, error }) => {
@@ -114,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         });
 
-      // 2. Escuta mudanças de estado da autenticação
+      // 3. Escuta mudanças de estado da autenticação
       const authStateResult = supabase.auth.onAuthStateChange(async (event, currentSession) => {
         if (!isMounted) return;
 
@@ -169,6 +196,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     if (msg.includes("network") || msg.includes("fetch")) {
       return "Falha de conexão com os serviços de autenticação. Verifique sua internet.";
+    }
+    if (
+      msg.includes("provider is not enabled") ||
+      msg.includes("unsupported provider") ||
+      msg.includes("validation_failed")
+    ) {
+      return "O login com o Google ainda não foi ativado no painel do Supabase. Habilite o provedor em Authentication > Providers > Google.";
     }
     return message;
   };
@@ -229,9 +263,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             nome: nome.trim() || "Usuário Médico",
           },
-          ...(typeof window !== "undefined"
-            ? { emailRedirectTo: `${window.location.origin}/auth` }
-            : {}),
+          emailRedirectTo:
+            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
         },
       });
 
@@ -256,7 +289,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Login com Google via Supabase OAuth (PKCE nativo)
-  const signInWithGoogle = async (): Promise<{ error: string | null }> => {
+  const signInWithGoogle = async (): Promise<{
+    error: string | null;
+    providerNotConfigured?: boolean;
+  }> => {
     if (!isSupabaseConfigured) {
       return {
         error:
@@ -265,12 +301,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectUrl =
+        typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          ...(typeof window !== "undefined"
-            ? { redirectTo: `${window.location.origin}/auth` }
-            : {}),
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
           queryParams: {
             access_type: "offline",
             prompt: "select_account",
@@ -279,7 +317,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        return { error: formatAuthError(error) };
+        const formatted = formatAuthError(error);
+        return {
+          error: formatted,
+          providerNotConfigured:
+            formatted.includes("painel do Supabase") ||
+            error.message.toLowerCase().includes("not enabled"),
+        };
+      }
+
+      if (!data?.url) {
+        return { error: "Não foi possível iniciar a autenticação com o Google." };
+      }
+
+      // Validação defensiva pré-redirecionamento:
+      // Se o provedor Google não estiver ativado no painel do Supabase,
+      // a rota /authorize retorna HTTP 400 {"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"}.
+      // Fazemos uma verificação prévia para evitar redirecionar o navegador para a tela de erro bruto do Supabase.
+      try {
+        const checkRes = await fetch(data.url, {
+          method: "GET",
+          redirect: "manual",
+        });
+
+        if (checkRes.status === 400) {
+          const body = (await checkRes.json().catch(() => null)) as {
+            code?: number;
+            msg?: string;
+            error_code?: string;
+          } | null;
+
+          if (
+            body?.msg?.toLowerCase().includes("not enabled") ||
+            body?.msg?.toLowerCase().includes("unsupported provider") ||
+            body?.error_code === "validation_failed"
+          ) {
+            return {
+              error:
+                "O login com o Google ainda não foi ativado no painel do Supabase. Habilite o provedor em Authentication > Providers > Google.",
+              providerNotConfigured: true,
+            };
+          }
+        }
+      } catch (checkErr) {
+        // Se houver restrição de rede no preflight, prossegue com segurança
+        console.warn("[Auth] Verificação de provedor Google OAuth:", checkErr);
+      }
+
+      // Se o provedor estiver ativo ou redirecionar normalmente, envia para a tela de login do Google
+      if (typeof window !== "undefined") {
+        window.location.assign(data.url);
       }
 
       return { error: null };
@@ -298,12 +385,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        email.trim(),
-        typeof window !== "undefined"
-          ? { redirectTo: `${window.location.origin}/auth?type=recovery` }
-          : {},
-      );
+      const redirectUrl =
+        typeof window !== "undefined" ? `${window.location.origin}/auth?type=recovery` : undefined;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectUrl,
+      });
 
       if (error) {
         // Para segurança contra enumeração de contas, não expor se o e-mail existe
@@ -352,10 +439,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
-        options:
-          typeof window !== "undefined"
-            ? { emailRedirectTo: `${window.location.origin}/auth` }
-            : {},
+        options: {
+          emailRedirectTo:
+            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+        },
       });
 
       if (error) {
@@ -363,6 +450,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { error: null };
+    } catch (err: unknown) {
+      return { error: formatAuthError(err) };
+    }
+  };
+
+  // Ativação manual através de URL (ex: redirecionamento que caiu em localhost) ou código PKCE
+  const activateWithUrlOrToken = async (input: string): Promise<{ error: string | null }> => {
+    if (!isSupabaseConfigured) {
+      return { error: "Supabase não está configurado." };
+    }
+    const trimmed = input.trim();
+    if (!trimmed) {
+      return { error: "Por favor, cole a URL de confirmação ou o código." };
+    }
+
+    try {
+      let code: string | null = null;
+      let accessToken: string | null = null;
+      let refreshToken: string | null = null;
+
+      // 1. Extrai código ?code= ou &code=
+      if (trimmed.includes("code=")) {
+        const match = trimmed.match(/[?&#]code=([^&#]+)/);
+        if (match && match[1]) {
+          code = decodeURIComponent(match[1]);
+        }
+      }
+
+      // 2. Extrai tokens de hash (#access_token=...&refresh_token=...)
+      if (trimmed.includes("access_token=")) {
+        const matchAccess = trimmed.match(/[?&#]access_token=([^&#]+)/);
+        const matchRefresh = trimmed.match(/[?&#]refresh_token=([^&#]+)/);
+        if (matchAccess && matchAccess[1]) {
+          accessToken = decodeURIComponent(matchAccess[1]);
+        }
+        if (matchRefresh && matchRefresh[1]) {
+          refreshToken = decodeURIComponent(matchRefresh[1]);
+        }
+      }
+
+      // Se achou código PKCE, troca por sessão
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          return { error: formatAuthError(error) };
+        }
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          if (data.session.user) {
+            await fetchProfile(data.session.user.id, data.session.user.user_metadata);
+          }
+          return { error: null };
+        }
+      }
+
+      // Se achou tokens no hash, define sessão
+      if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) {
+          return { error: formatAuthError(error) };
+        }
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          if (data.session.user) {
+            await fetchProfile(data.session.user.id, data.session.user.user_metadata);
+          }
+          return { error: null };
+        }
+      }
+
+      // Caso tenha colado apenas o código diretamente (sem URL)
+      if (!trimmed.includes("http") && !trimmed.includes("/") && trimmed.length > 10) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(trimmed);
+        if (!error && data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          if (data.session.user) {
+            await fetchProfile(data.session.user.id, data.session.user.user_metadata);
+          }
+          return { error: null };
+        }
+      }
+
+      return {
+        error:
+          "Não foi possível extrair os dados de autenticação. Copie toda a URL presente na barra de endereços da aba com o erro do localhost.",
+      };
     } catch (err: unknown) {
       return { error: formatAuthError(err) };
     }
@@ -409,6 +588,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendPasswordReset,
         updatePassword,
         resendConfirmationEmail,
+        activateWithUrlOrToken,
         signOut,
         refreshProfile,
       }}
