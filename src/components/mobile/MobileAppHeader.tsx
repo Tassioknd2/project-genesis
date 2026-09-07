@@ -46,7 +46,7 @@ export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
           {user && (
             <div className="flex items-center gap-1 pl-1 border-l border-line2/60">
               <span className="max-w-[80px] truncate text-[11px] font-semibold text-ink">
-                {profile?.nome || user.user_metadata?.nome || user.email?.split("@")[0] || "Médico"}
+                {profile?.nome || (user.user_metadata?.["nome"] as string | undefined) || user.email?.split("@")[0] || "Médico"}
               </span>
               <button
                 type="button"

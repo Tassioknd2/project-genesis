@@ -44,25 +44,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (userId: string, userMetadata?: Record<string, unknown>) => {
       if (!isSupabaseConfigured) return;
       try {
-        const { data, error } = await supabase
-          .from("profiles")
+        // A tabela public.profiles pode não existir ainda no banco; por isso a
+        // consulta é feita de forma não tipada e falha silenciosamente.
+        const { data, error } = (await supabase
+          .from("profiles" as never)
           .select("id, nome, role, criado_em, atualizado_em")
           .eq("id", userId)
-          .maybeSingle();
+          .maybeSingle()) as unknown as {
+          data: UserProfile | null;
+          error: { message: string } | null;
+        };
 
         if (error) {
           console.warn("[Auth] Não foi possível carregar perfil do banco:", error.message);
         }
 
         if (data) {
-          setProfile(data as UserProfile);
+          setProfile(data);
         } else {
           // Perfil temporário seguro enquanto trigger no banco executa
           const metadataName =
-            typeof userMetadata?.nome === "string"
-              ? userMetadata.nome
-              : typeof userMetadata?.full_name === "string"
-                ? userMetadata.full_name
+            typeof userMetadata?.["nome"] === "string"
+              ? userMetadata["nome"]
+              : typeof userMetadata?.["full_name"] === "string"
+                ? userMetadata["full_name"]
                 : "Usuário Médico";
 
           setProfile({
@@ -224,8 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             nome: nome.trim() || "Usuário Médico",
           },
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+          ...(typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {}),
         },
       });
 
@@ -259,13 +265,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const redirectUrl =
-        typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined;
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
+          ...(typeof window !== "undefined"
+            ? { redirectTo: `${window.location.origin}/auth` }
+            : {}),
           queryParams: {
             access_type: "offline",
             prompt: "select_account",
@@ -293,12 +298,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const redirectUrl =
-        typeof window !== "undefined" ? `${window.location.origin}/auth?type=recovery` : undefined;
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: redirectUrl,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        typeof window !== "undefined"
+          ? { redirectTo: `${window.location.origin}/auth?type=recovery` }
+          : {},
+      );
 
       if (error) {
         // Para segurança contra enumeração de contas, não expor se o e-mail existe
@@ -347,10 +352,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
-        options: {
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
-        },
+        options:
+          typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {},
       });
 
       if (error) {
