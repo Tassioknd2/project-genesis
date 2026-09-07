@@ -44,25 +44,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (userId: string, userMetadata?: Record<string, unknown>) => {
       if (!isSupabaseConfigured) return;
       try {
-        const { data, error } = await supabase
-          .from("profiles")
+        // A tabela public.profiles pode não existir ainda no banco; por isso a
+        // consulta é feita de forma não tipada e falha silenciosamente.
+        const { data, error } = (await supabase
+          .from("profiles" as never)
           .select("id, nome, role, criado_em, atualizado_em")
           .eq("id", userId)
-          .maybeSingle();
+          .maybeSingle()) as unknown as {
+          data: UserProfile | null;
+          error: { message: string } | null;
+        };
 
         if (error) {
           console.warn("[Auth] Não foi possível carregar perfil do banco:", error.message);
         }
 
         if (data) {
-          setProfile(data as UserProfile);
+          setProfile(data);
         } else {
           // Perfil temporário seguro enquanto trigger no banco executa
           const metadataName =
-            typeof userMetadata?.nome === "string"
-              ? userMetadata.nome
-              : typeof userMetadata?.full_name === "string"
-                ? userMetadata.full_name
+            typeof userMetadata?.["nome"] === "string"
+              ? userMetadata["nome"]
+              : typeof userMetadata?.["full_name"] === "string"
+                ? userMetadata["full_name"]
                 : "Usuário Médico";
 
           setProfile({
