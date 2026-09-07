@@ -155,6 +155,14 @@ export class AppointmentRepository {
     }
   }
 
+  async findAll(): Promise<Appointment[]> {
+    const results: Appointment[] = [];
+    for (const item of this.appointments.values()) {
+      results.push({ ...item });
+    }
+    return results.sort((a, b) => a.data.localeCompare(b.data) || a.hora.localeCompare(b.hora));
+  }
+
   async findById(id: string): Promise<Appointment | null> {
     const item = this.appointments.get(id);
     return item ? { ...item } : null;

@@ -210,22 +210,22 @@ export async function handleApiRequest(request: Request): Promise<Response | nul
           let senderPhone = "";
           let messageText = "";
 
-          if (typeof body.phone === "string") {
-            senderPhone = body.phone;
-          } else if (typeof body.senderPhone === "string") {
-            senderPhone = body.senderPhone;
+          if (typeof body["phone"] === "string") {
+            senderPhone = body["phone"];
+          } else if (typeof body["senderPhone"] === "string") {
+            senderPhone = body["senderPhone"];
           }
 
           if (
-            body.text &&
-            typeof body.text === "object" &&
-            "message" in (body.text as Record<string, unknown>)
+            body["text"] &&
+            typeof body["text"] === "object" &&
+            "message" in (body["text"] as Record<string, unknown>)
           ) {
-            messageText = String((body.text as Record<string, unknown>).message || "");
-          } else if (typeof body.body === "string") {
-            messageText = body.body;
-          } else if (typeof body.message === "string") {
-            messageText = body.message;
+            messageText = String((body["text"] as Record<string, unknown>)["message"] || "");
+          } else if (typeof body["body"] === "string") {
+            messageText = body["body"];
+          } else if (typeof body["message"] === "string") {
+            messageText = body["message"];
           }
 
           if (senderPhone && messageText) {
