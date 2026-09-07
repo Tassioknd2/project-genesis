@@ -147,7 +147,7 @@ export function HomeHeader({ onOpenContact }: HomeHeaderProps) {
             <ThemeToggle />
 
             <Link
-              to="/agenda"
+              to="/auth"
               className="group inline-flex items-center gap-1.5 rounded-full border border-[#E5DCBA] bg-[#FFFFFF] px-3.5 py-1.5 text-[13px] font-semibold text-[#6B5A4E] shadow-xs transition-all duration-200 hover:scale-[1.02] hover:border-[#8E3E1E]/40 hover:bg-[#F3ECE0] hover:text-[#2C2018] hover:shadow-sm active:scale-95 dark:border-[#3a3528] dark:bg-[#252018] dark:text-[#baa998] dark:hover:bg-[#322c22] dark:hover:text-[#f3ede1]"
             >
               <Lock className="size-3.5 text-[#968374] transition-colors duration-200 group-hover:text-[#8E3E1E]" />

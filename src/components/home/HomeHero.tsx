@@ -80,7 +80,7 @@ export function HomeHero({ onOpenDemo, onScrollToDemo }: HomeHeroProps) {
             className="btn-shimmer-effect group flex w-full items-center justify-center gap-2 rounded-xl bg-[#8E3E1E] px-7 py-3.5 font-mono text-sm font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-[#743116] hover:shadow-lg active:scale-95 sm:w-auto dark:bg-[#a34824] dark:hover:bg-[#8e3e1e]"
           >
             <Sparkles className="size-4 text-white/90" />
-            <span>Começar Teste Grátis de 14 Dias</span>
+            <span>Começar 1 Mês de Teste Gratuito</span>
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
 

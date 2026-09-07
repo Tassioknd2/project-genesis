@@ -26,7 +26,7 @@ export function HomeCtaSection({ onOpenDemo, onOpenContact }: HomeCtaSectionProp
         </h2>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[#baa998] sm:text-lg">
-          Teste grátis por 14 dias sem necessidade de cartão de crédito. Nossa equipe de
+          1 mês de teste gratuito sem necessidade de cartão de crédito. Nossa equipe de
           especialistas médicos auxilia em toda a migração dos seus dados de prontuário e agenda.
         </p>
 
