@@ -1,6 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { HeartPulse } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { HeartPulse, LogOut, User } from "lucide-react";
+import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Appointment } from "@/lib/agenda-data";
 
 export interface MobileAppHeaderProps {
@@ -10,6 +12,15 @@ export interface MobileAppHeaderProps {
 }
 
 export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Sessão encerrada com sucesso.");
+    navigate({ to: "/auth" });
+  };
+
   return (
     <header
       id="mobile-app-header"
@@ -29,8 +40,24 @@ export function MobileAppHeader(_props: MobileAppHeaderProps = {}) {
         </Link>
 
         {/* Ações Rápidas no Cabeçalho */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <ThemeToggle />
+
+          {user && (
+            <div className="flex items-center gap-1 pl-1 border-l border-line2/60">
+              <span className="max-w-[80px] truncate text-[11px] font-semibold text-ink">
+                {profile?.nome || user.user_metadata?.nome || user.email?.split("@")[0] || "Médico"}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Encerrar sessão"
+                className="flex size-8 items-center justify-center rounded-lg border border-line2/80 bg-card text-muted hover:text-red-700 dark:hover:text-red-400 active:scale-95"
+              >
+                <LogOut className="size-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

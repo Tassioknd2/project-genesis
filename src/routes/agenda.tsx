@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppHeader } from "@/components/AppHeader";
 import { DesktopAgendaView, type FiltroAgenda } from "@/components/desktop/DesktopAgendaView";
 import { MobileAgendaView, type FiltroMobile } from "@/components/mobile/MobileAgendaView";
@@ -358,113 +359,115 @@ export function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-paper font-sans text-ink selection:bg-amber/20">
-      <AppHeader
-        selectedDate={dataSelecionada}
-        onSelectDate={setDataSelecionada}
-        onNovoAgendamento={handleNovoAgendamento}
-        agendaDoDia={resolverAgenda}
-      />
-
-      <ScrollProgressHeart />
-
-      {/* Camada Desktop (Totalmente Intacta e Isolada) */}
-      <main className="hidden md:block">
-        <DesktopAgendaView
-          dataSelecionada={dataSelecionada}
-          total={total}
-          confirmados={confirmados}
-          faltas={faltas}
-          taxaConfirmacao={taxaConfirmacao}
-          totalPendencias={totalPendencias}
-          semResposta={semResposta}
-          recusados={recusados}
-          totalExames={totalExames}
-          totalConsultas={totalConsultas}
-          filtro={filtro}
-          setFiltro={setFiltro}
-          busca={busca}
-          setBusca={setBusca}
-          categoria={categoria}
-          setCategoria={setCategoria}
-          visiveis={visiveis}
-          notas={notas}
-          etiquetas={etiquetas}
-          onAction={handleAction}
-          onAddNota={addNota}
-          onRemoveNota={removeNota}
-          onAddEtiqueta={addEtiqueta}
-          onRemoveEtiqueta={removeEtiqueta}
-          onEditar={(app) => setEditando(app)}
-          onRemarcar={(app) => setRemarcando(app)}
-          onAbrirWizard={() => setWizardAberto(true)}
-        />
-      </main>
-
-      {/* Camada Mobile (Base Dedicada e Separada para Evolução Mobile) */}
-      <main className="block md:hidden">
-        <MobileAgendaView
-          dataSelecionada={dataSelecionada}
+    <AuthGuard>
+      <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-paper font-sans text-ink selection:bg-amber/20">
+        <AppHeader
+          selectedDate={dataSelecionada}
           onSelectDate={setDataSelecionada}
-          total={total}
-          confirmados={confirmados}
-          faltas={faltas}
+          onNovoAgendamento={handleNovoAgendamento}
+          agendaDoDia={resolverAgenda}
+        />
+
+        <ScrollProgressHeart />
+
+        {/* Camada Desktop (Totalmente Intacta e Isolada) */}
+        <main className="hidden md:block">
+          <DesktopAgendaView
+            dataSelecionada={dataSelecionada}
+            total={total}
+            confirmados={confirmados}
+            faltas={faltas}
+            taxaConfirmacao={taxaConfirmacao}
+            totalPendencias={totalPendencias}
+            semResposta={semResposta}
+            recusados={recusados}
+            totalExames={totalExames}
+            totalConsultas={totalConsultas}
+            filtro={filtro}
+            setFiltro={setFiltro}
+            busca={busca}
+            setBusca={setBusca}
+            categoria={categoria}
+            setCategoria={setCategoria}
+            visiveis={visiveis}
+            notas={notas}
+            etiquetas={etiquetas}
+            onAction={handleAction}
+            onAddNota={addNota}
+            onRemoveNota={removeNota}
+            onAddEtiqueta={addEtiqueta}
+            onRemoveEtiqueta={removeEtiqueta}
+            onEditar={(app) => setEditando(app)}
+            onRemarcar={(app) => setRemarcando(app)}
+            onAbrirWizard={() => setWizardAberto(true)}
+          />
+        </main>
+
+        {/* Camada Mobile (Base Dedicada e Separada para Evolução Mobile) */}
+        <main className="block md:hidden">
+          <MobileAgendaView
+            dataSelecionada={dataSelecionada}
+            onSelectDate={setDataSelecionada}
+            total={total}
+            confirmados={confirmados}
+            faltas={faltas}
+            totalPendencias={totalPendencias}
+            totalExames={totalExames}
+            totalConsultas={totalConsultas}
+            filtro={filtro as FiltroMobile}
+            setFiltro={setFiltro as React.Dispatch<React.SetStateAction<FiltroMobile>>}
+            busca={busca}
+            setBusca={setBusca}
+            categoria={categoria}
+            setCategoria={setCategoria}
+            visiveis={visiveis}
+            notas={notas}
+            etiquetas={etiquetas}
+            onAction={handleAction}
+            onEditar={(app) => setEditando(app)}
+            onRemarcar={(app) => setRemarcando(app)}
+            onAbrirWizard={() => setWizardAberto(true)}
+          />
+        </main>
+
+        {/* Barra de Navegação Inferior Móvel */}
+        <MobileBottomNav
           totalPendencias={totalPendencias}
-          totalExames={totalExames}
-          totalConsultas={totalConsultas}
-          filtro={filtro as FiltroMobile}
-          setFiltro={setFiltro as React.Dispatch<React.SetStateAction<FiltroMobile>>}
-          busca={busca}
-          setBusca={setBusca}
-          categoria={categoria}
-          setCategoria={setCategoria}
-          visiveis={visiveis}
-          notas={notas}
-          etiquetas={etiquetas}
-          onAction={handleAction}
-          onEditar={(app) => setEditando(app)}
-          onRemarcar={(app) => setRemarcando(app)}
-          onAbrirWizard={() => setWizardAberto(true)}
+          onNovoAgendamento={() => setWizardAberto(true)}
+          onFiltroPendencias={() =>
+            setFiltro((prev) => (prev === "pendencias" ? "todos" : "pendencias"))
+          }
+          isFiltroPendenciasAtivo={filtro === "pendencias"}
         />
-      </main>
 
-      {/* Barra de Navegação Inferior Móvel */}
-      <MobileBottomNav
-        totalPendencias={totalPendencias}
-        onNovoAgendamento={() => setWizardAberto(true)}
-        onFiltroPendencias={() =>
-          setFiltro((prev) => (prev === "pendencias" ? "todos" : "pendencias"))
-        }
-        isFiltroPendenciasAtivo={filtro === "pendencias"}
-      />
+        {editando && (
+          <EditarRegistroDialog
+            open={!!editando}
+            onOpenChange={(aberto) => !aberto && setEditando(null)}
+            paciente={editando.paciente}
+            appointment={editando}
+            onSalvar={(resultado) => salvarEdicao(editando, resultado)}
+          />
+        )}
 
-      {editando && (
-        <EditarRegistroDialog
-          open={!!editando}
-          onOpenChange={(aberto) => !aberto && setEditando(null)}
-          paciente={editando.paciente}
-          appointment={editando}
-          onSalvar={(resultado) => salvarEdicao(editando, resultado)}
+        {remarcando && (
+          <RemarcarAgendamentoDialog
+            open={!!remarcando}
+            onOpenChange={(aberto) => !aberto && setRemarcando(null)}
+            appointment={remarcando}
+            dataAtual={dataSelecionada}
+            onConfirmarRemarcacao={handleRemarcarConfirmado}
+            onCancelarAgendamento={handleCancelarAgendamento}
+          />
+        )}
+
+        <NovoAgendamentoWizard
+          open={wizardAberto}
+          onOpenChange={setWizardAberto}
+          dataInicial={dataSelecionada}
+          onSalvar={handleNovoAgendamento}
         />
-      )}
-
-      {remarcando && (
-        <RemarcarAgendamentoDialog
-          open={!!remarcando}
-          onOpenChange={(aberto) => !aberto && setRemarcando(null)}
-          appointment={remarcando}
-          dataAtual={dataSelecionada}
-          onConfirmarRemarcacao={handleRemarcarConfirmado}
-          onCancelarAgendamento={handleCancelarAgendamento}
-        />
-      )}
-
-      <NovoAgendamentoWizard
-        open={wizardAberto}
-        onOpenChange={setWizardAberto}
-        dataInicial={dataSelecionada}
-        onSalvar={handleNovoAgendamento}
-      />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

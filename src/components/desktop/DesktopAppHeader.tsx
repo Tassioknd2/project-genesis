@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   HeartPulse,
+  LogOut,
   Plus,
+  User,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +27,7 @@ import {
   NovoAgendamentoWizard,
   type NovoAgendamentoDraft,
 } from "@/components/NovoAgendamentoWizard";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface DesktopAppHeaderProps {
   selectedDate?: Date | undefined;
@@ -85,6 +88,14 @@ export function DesktopAppHeader({
 
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Sessão encerrada com sucesso.");
+    navigate({ to: "/auth" });
+  };
 
   const data = selectedDate ?? dataLocal;
   const selecionar = onSelectDate ?? setDataLocal;
@@ -252,6 +263,34 @@ export function DesktopAppHeader({
             <Plus className="size-4 text-amber" />
             <span>Novo agendamento</span>
           </button>
+
+          {user && (
+            <div className="flex items-center gap-2 pl-2 border-l border-line2/70">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-line2/80 text-xs shadow-2xs">
+                <User className="size-3.5 text-amber shrink-0" />
+                <span
+                  className="font-semibold text-ink max-w-[130px] truncate"
+                  title={user.email ?? ""}
+                >
+                  {profile?.nome ||
+                    user.user_metadata?.nome ||
+                    user.email?.split("@")[0] ||
+                    "Usuário"}
+                </span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted px-1.5 py-0.5 rounded bg-paper/90">
+                  {profile?.role || "médico"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Encerrar sessão"
+                className="flex items-center justify-center size-9 rounded-xl border border-line2/80 bg-card text-muted hover:text-red-700 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-900/60 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all shadow-2xs active:scale-95"
+              >
+                <LogOut className="size-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

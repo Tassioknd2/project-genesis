@@ -13,6 +13,7 @@ import { ScrollToTopButton } from "../components/ScrollToTopButton";
 
 import appCss from "../styles.css?url";
 import "../styles.css";
+import { AuthProvider } from "../contexts/AuthContext";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -138,10 +139,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <ScrollToTopButton />
-      <Toaster position="bottom-right" richColors />
+      <AuthProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <ScrollToTopButton />
+        <Toaster position="bottom-right" richColors />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

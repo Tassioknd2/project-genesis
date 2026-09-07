@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppHeader } from "@/components/AppHeader";
 import { DesktopPacientesView } from "@/components/desktop/DesktopPacientesView";
 import { MobilePacientesView } from "@/components/mobile/MobilePacientesView";
@@ -109,67 +110,69 @@ function PacientesPage() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-paper font-sans text-ink selection:bg-amber/20">
-      <AppHeader />
-      <ScrollProgressHeart />
+    <AuthGuard>
+      <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-paper font-sans text-ink selection:bg-amber/20">
+        <AppHeader />
+        <ScrollProgressHeart />
 
-      {/* Camada Desktop (Totalmente Intacta e Isolada) */}
-      <main className="hidden md:block">
-        <DesktopPacientesView
-          listaPacientes={listaPacientes}
-          visiveis={visiveis}
-          totalParticulares={totalParticulares}
-          totalConvenios={totalConvenios}
-          convenios={convenios}
-          busca={busca}
-          setBusca={setBusca}
-          filtroConvenio={filtroConvenio}
-          setFiltroConvenio={setFiltroConvenio}
-          onAbrirEdicao={abrirEdicao}
-          onAbrirAgendamento={abrirAgendamento}
+        {/* Camada Desktop (Totalmente Intacta e Isolada) */}
+        <main className="hidden md:block">
+          <DesktopPacientesView
+            listaPacientes={listaPacientes}
+            visiveis={visiveis}
+            totalParticulares={totalParticulares}
+            totalConvenios={totalConvenios}
+            convenios={convenios}
+            busca={busca}
+            setBusca={setBusca}
+            filtroConvenio={filtroConvenio}
+            setFiltroConvenio={setFiltroConvenio}
+            onAbrirEdicao={abrirEdicao}
+            onAbrirAgendamento={abrirAgendamento}
+          />
+        </main>
+
+        {/* Camada Mobile (Base Dedicada para Evolução Mobile) */}
+        <main className="block md:hidden">
+          <MobilePacientesView
+            listaPacientes={listaPacientes}
+            visiveis={visiveis}
+            totalParticulares={totalParticulares}
+            totalConvenios={totalConvenios}
+            convenios={convenios}
+            busca={busca}
+            setBusca={setBusca}
+            filtroConvenio={filtroConvenio}
+            setFiltroConvenio={setFiltroConvenio}
+            onAbrirEdicao={abrirEdicao}
+            onAbrirAgendamento={abrirAgendamento}
+          />
+        </main>
+
+        {/* Navegação Inferior Móvel */}
+        <MobileBottomNav onNovoAgendamento={() => setWizardAberto(true)} />
+
+        {/* Diálogo de Edição de Paciente */}
+        {pacienteParaEditar && (
+          <EditarPacienteDialog
+            open={dialogEditarAberto}
+            onOpenChange={(aberto) => {
+              setDialogEditarAberto(aberto);
+              if (!aberto) setPacienteParaEditar(null);
+            }}
+            paciente={pacienteParaEditar}
+            onSalvar={handleSalvarPaciente}
+          />
+        )}
+
+        {/* Assistente de Novo Agendamento */}
+        <NovoAgendamentoWizard
+          open={wizardAberto}
+          onOpenChange={setWizardAberto}
+          pacienteInicial={pacienteParaAgendar ?? undefined}
+          onSalvar={handleSalvarDraft}
         />
-      </main>
-
-      {/* Camada Mobile (Base Dedicada para Evolução Mobile) */}
-      <main className="block md:hidden">
-        <MobilePacientesView
-          listaPacientes={listaPacientes}
-          visiveis={visiveis}
-          totalParticulares={totalParticulares}
-          totalConvenios={totalConvenios}
-          convenios={convenios}
-          busca={busca}
-          setBusca={setBusca}
-          filtroConvenio={filtroConvenio}
-          setFiltroConvenio={setFiltroConvenio}
-          onAbrirEdicao={abrirEdicao}
-          onAbrirAgendamento={abrirAgendamento}
-        />
-      </main>
-
-      {/* Navegação Inferior Móvel */}
-      <MobileBottomNav onNovoAgendamento={() => setWizardAberto(true)} />
-
-      {/* Diálogo de Edição de Paciente */}
-      {pacienteParaEditar && (
-        <EditarPacienteDialog
-          open={dialogEditarAberto}
-          onOpenChange={(aberto) => {
-            setDialogEditarAberto(aberto);
-            if (!aberto) setPacienteParaEditar(null);
-          }}
-          paciente={pacienteParaEditar}
-          onSalvar={handleSalvarPaciente}
-        />
-      )}
-
-      {/* Assistente de Novo Agendamento */}
-      <NovoAgendamentoWizard
-        open={wizardAberto}
-        onOpenChange={setWizardAberto}
-        pacienteInicial={pacienteParaAgendar ?? undefined}
-        onSalvar={handleSalvarDraft}
-      />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
