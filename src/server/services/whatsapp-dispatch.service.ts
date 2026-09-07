@@ -183,7 +183,7 @@ export class WhatsAppDispatchService {
     const textClean = messageText.trim().toLowerCase();
 
     // Busca agendamentos recentes
-    const allAppointments = await appointmentRepository.find({});
+    const allAppointments = await appointmentRepository.findAll();
     // Encontra agendamento do paciente cujo telefone coincida com os dígitos finais (ex: últimos 8 ou 9 dígitos)
     const matched = allAppointments.find((a) => {
       const patientDigits = a.paciente.telefone.replace(/\D/g, "");

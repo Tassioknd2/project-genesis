@@ -5,11 +5,11 @@ export interface WhatsAppSettings {
   apiUrl: string;
   instanceId: string;
   instanceToken: string;
-  clientToken?: string;
+  clientToken?: string | undefined;
   isConnected: boolean;
-  connectedPhone?: string;
-  connectedName?: string;
-  batteryLevel?: number;
+  connectedPhone?: string | undefined;
+  connectedName?: string | undefined;
+  batteryLevel?: number | undefined;
   autoSendEnabled: boolean;
   antecedenciaHoras: number; // 24 ou 48
   horarioDisparo: string; // "08:00"
