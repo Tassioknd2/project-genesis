@@ -229,8 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             nome: nome.trim() || "Usuário Médico",
           },
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+          ...(typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {}),
         },
       });
 
@@ -264,13 +265,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const redirectUrl =
-        typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined;
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
+          ...(typeof window !== "undefined"
+            ? { redirectTo: `${window.location.origin}/auth` }
+            : {}),
           queryParams: {
             access_type: "offline",
             prompt: "select_account",
@@ -298,12 +298,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const redirectUrl =
-        typeof window !== "undefined" ? `${window.location.origin}/auth?type=recovery` : undefined;
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: redirectUrl,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        typeof window !== "undefined"
+          ? { redirectTo: `${window.location.origin}/auth?type=recovery` }
+          : {},
+      );
 
       if (error) {
         // Para segurança contra enumeração de contas, não expor se o e-mail existe
@@ -352,10 +352,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
-        options: {
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
-        },
+        options:
+          typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {},
       });
 
       if (error) {
