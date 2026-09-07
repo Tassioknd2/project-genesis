@@ -273,7 +273,7 @@ export function DesktopAppHeader({
                   title={user.email ?? ""}
                 >
                   {profile?.nome ||
-                    user.user_metadata?.nome ||
+                    (user.user_metadata?.["nome"] as string | undefined) ||
                     user.email?.split("@")[0] ||
                     "Usuário"}
                 </span>

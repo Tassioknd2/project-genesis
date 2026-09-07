@@ -107,7 +107,7 @@ function AuthPage() {
   useEffect(() => {
     if (user && !authLoading && mode !== "reset") {
       toast.info("Você já está autenticado.", {
-        description: `Conectado como ${user.user_metadata?.nome || user.email}.`,
+        description: `Conectado como ${(user.user_metadata?.["nome"] as string | undefined) || user.email}.`,
       });
       navigate({ to: "/agenda" });
     }
