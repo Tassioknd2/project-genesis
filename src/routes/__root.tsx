@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { ScrollToTopButton } from "../components/ScrollToTopButton";
+import { Analytics } from "@vercel/analytics/react";
 
 import appCss from "../styles.css?url";
 import "../styles.css";
@@ -144,6 +145,7 @@ function RootComponent() {
         <Outlet />
         <ScrollToTopButton />
         <Toaster position="bottom-right" richColors />
+        <Analytics />
       </AuthProvider>
     </QueryClientProvider>
   );
