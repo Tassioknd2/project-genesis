@@ -457,8 +457,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         type: "signup",
         email: email.trim(),
         options: {
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+          ...(typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {}),
         },
       });
 
