@@ -279,8 +279,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             nome: nome.trim() || "Usuário Médico",
           },
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+          ...(typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {}),
         },
       });
 
