@@ -194,6 +194,7 @@ export function WhatsAppDashboard() {
     if (logIndex === -1) return;
 
     const log = logs[logIndex];
+    if (!log) return;
     let novoStatus: WhatsAppMessageLog["status"] = "confirmado";
     let textoResposta = "";
 

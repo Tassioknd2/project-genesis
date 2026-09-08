@@ -45,7 +45,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (userId: string, userMetadata?: Record<string, unknown>) => {
       if (!isSupabaseConfigured) return;
       try {
-        const { data, error } = await supabase
+        // A tabela public.profiles pode não constar nos tipos gerados; usa acesso não tipado
+        const untyped = supabase as unknown as {
+          from: (table: string) => {
+            select: (cols: string) => {
+              eq: (
+                col: string,
+                val: string,
+              ) => {
+                maybeSingle: () => Promise<{
+                  data: UserProfile | null;
+                  error: { message: string } | null;
+                }>;
+              };
+            };
+          };
+        };
+        const { data, error } = await untyped
           .from("profiles")
           .select("id, nome, role, criado_em, atualizado_em")
           .eq("id", userId)
@@ -56,14 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (data) {
-          setProfile(data as UserProfile);
+          setProfile(data);
         } else {
           // Perfil temporário seguro enquanto trigger no banco executa
           const metadataName =
-            typeof userMetadata?.nome === "string"
-              ? userMetadata.nome
-              : typeof userMetadata?.full_name === "string"
-                ? userMetadata.full_name
+            typeof userMetadata?.["nome"] === "string"
+              ? (userMetadata["nome"] as string)
+              : typeof userMetadata?.["full_name"] === "string"
+                ? (userMetadata["full_name"] as string)
                 : "Usuário Médico";
 
           setProfile({
@@ -263,8 +279,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             nome: nome.trim() || "Usuário Médico",
           },
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+          ...(typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {}),
         },
       });
 
@@ -307,7 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
+          ...(redirectUrl ? { redirectTo: redirectUrl } : {}),
           skipBrowserRedirect: true,
           queryParams: {
             access_type: "offline",
@@ -389,7 +406,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         typeof window !== "undefined" ? `${window.location.origin}/auth?type=recovery` : undefined;
 
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: redirectUrl,
+        ...(redirectUrl ? { redirectTo: redirectUrl } : {}),
       });
 
       if (error) {
@@ -440,8 +457,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         type: "signup",
         email: email.trim(),
         options: {
-          emailRedirectTo:
-            typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+          ...(typeof window !== "undefined"
+            ? { emailRedirectTo: `${window.location.origin}/auth` }
+            : {}),
         },
       });
 
